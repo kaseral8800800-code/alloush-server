@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة الإدارة - منصة علوش</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Cairo',sans-serif;background:#1a1a2e;color:#fff;direction:rtl;padding:20px}
+        .container{max-width:600px;margin:0 auto}
+        h2{text-align:center;color:#d4af37;margin-bottom:20px}
+        input,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #333;background:#16213e;color:#fff;font-family:'Cairo',sans-serif;margin-bottom:10px}
+        button{width:100%;padding:12px;border:none;border-radius:8px;background:#d4af37;color:#000;font-weight:700;font-size:16px;cursor:pointer;margin-top:10px}
+        .msg{text-align:center;margin-top:10px;padding:10px;border-radius:8px;display:none}
+        .success{background:#1a8a4a;display:block}.error{background:#d94040;display:block}
+        .login-box,.admin-box{background:#16213e;padding:30px;border-radius:15px;margin-top:20px}
+        .admin-box{display:none}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>🛡️ لوحة الإدارة</h2>
+    <div class="login-box" id="loginBox">
+        <h3 style="text-align:center;margin-bottom:15px">تسجيل الدخول</h3>
+        <input type="password" id="passInput" placeholder="كلمة السر">
+        <button onclick="login()">دخول</button>
+        <div class="msg" id="loginMsg"></div>
+    </div>
+    <div class="admin-box" id="adminBox">
+        <h3 style="text-align:center;margin-bottom:15px">➕ إضافة ملف</h3>
+        <input id="fileName" placeholder="اسم الملف">
+        <input id="fileDesc" placeholder="الوصف">
+        <input id="fileIcon" placeholder="الأيقونة مثل: 📐">
+        <input id="fileUrl" placeholder="رابط التحميل">
+        <button onclick="addFile()">إضافة</button>
+        <button onclick="logout()" style="background:#555">تسجيل الخروج</button>
+        <div class="msg" id="adminMsg"></div>
+    </div>
+</div>
+<script>
+const TOKEN='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';
+const OWNER='kaseral8800800-code';
+const REPO='Ali';
+const PASS='admin123';
+function login(){if(document.getElementById('passInput').value===PASS){document.getElementById('loginBox').style.display='none';document.getElementById('adminBox').style.display='block'}else{var m=document.getElementById('loginMsg');m.textContent='❌ كلمة سر خاطئة';m.className='msg error'}}
+function logout(){document.getElementById('loginBox').style.display='block';document.getElementById('adminBox').style.display='none'}
+async function addFile(){
+    var name=document.getElementById('fileName').value;
+    var desc=document.getElementById('fileDesc').value;
+    var icon=document.getElementById('fileIcon').value;
+    var url=document.getElementById('fileUrl').value;
+    var msg=document.getElementById('adminMsg');
+    if(!name||!url){msg.textContent='❌ املأ جميع الحقول';msg.className='msg error';return}
+    try{
+        var r=await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/files.json`,{headers:{'Authorization':`token ${TOKEN}`,'Accept':'application/vnd.github.v3+json'}});
+        var d=await r.json();
+        var data=JSON.parse(atob(d.content));
+        if(!data.files)data.files=[];
+        data.files.push({name:name,desc:desc,icon:icon||'📄',url:url});
+        var nc=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
+        await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/files.json`,{method:'PUT',headers:{'Authorization':`token ${TOKEN}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},body:JSON.stringify({message:'➕ '+name,content:nc,sha:d.sha,branch:'main'})});
+        msg.textContent='✅ تمت الإضافة!';msg.className='msg success';
+        document.getElementById('fileName').value='';document.getElementById('fileDesc').value='';document.getElementById('fileIcon').value='';document.getElementById('fileUrl').value='';
+    }catch(e){msg.textContent='❌ خطأ: '+e.message;msg.className='msg error'}
+}
+</script>
+</body>
+</html>
