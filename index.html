@@ -1,270 +1,2238 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بكالوريا علمي - منصة علوش</title>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;600;700&family=Cairo:wght@400;600;700;900&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        html,body{width:100%;height:100%;font-family:'Cairo',sans-serif;direction:rtl;background:#eef3f8;color:#1a1a2e;overflow:hidden}
-        #mainApp{width:100%;height:100%;display:flex;flex-direction:column}
-        .header{background:linear-gradient(135deg,#1a3a5c,#2c5f8a);padding:10px 12px;color:white;border-radius:0 0 20px 20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 20px rgba(0,0,0,0.2);z-index:10;position:relative}
-        .header span{font-size:15px;font-weight:900;font-family:'El Messiri',serif;cursor:pointer;user-select:none}
-        .header .h-icon{position:absolute;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;width:34px;height:34px;border-radius:10px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-        .news-bar{background:linear-gradient(135deg,#1a3a5c,#2c5f8a);margin:8px 10px;border-radius:12px;padding:10px 14px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,0.2);flex-shrink:0}
-        .news-bar .news-scroll{overflow:hidden;white-space:nowrap}
-        .news-bar .news-track{display:inline-block;animation:scrollNews 20s linear infinite}
-        @keyframes scrollNews{0%{transform:translateX(0%)}100%{transform:translateX(-50%)}}
-        .news-item{display:inline-block;margin-left:60px;font-size:13px;color:#fff;font-weight:700}
-        .news-date{font-size:9px;color:#ffd700;margin-left:8px;background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:12px}
-        .links-section{margin:8px 10px;display:flex;flex-wrap:wrap;gap:8px;flex-shrink:0}
-        .link-btn{flex:1;min-width:80px;padding:10px 15px;border-radius:10px;font-weight:700;font-size:12px;text-align:center;text-decoration:none;color:white;background:linear-gradient(135deg,#1a8a4a,#2d7028);box-shadow:0 2px 10px rgba(0,0,0,0.1);white-space:nowrap}
-        .link-btn.red{background:linear-gradient(135deg,#d94040,#b71c1c)}.link-btn.blue{background:linear-gradient(135deg,#2c5f8a,#1565C0)}.link-btn.gold{background:linear-gradient(135deg,#d4af37,#f5e6a3);color:#1a1a2e}
-        .sidebar-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:999;display:none}
-        .sidebar-overlay.show{display:block}
-        .sidebar{position:fixed;top:0;right:-300px;width:280px;height:100%;background:rgba(255,255,255,0.97);z-index:1000;transition:right 0.3s;overflow-y:auto;box-shadow:-5px 0 30px rgba(0,0,0,0.3);padding:15px}
-        .sidebar.show{right:0}.sidebar h3{font-family:'El Messiri',serif;text-align:center;margin-bottom:15px;font-size:16px}
-        .sidebar .lb-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;margin-bottom:6px;background:rgba(0,0,0,0.03)}
-        .sidebar .lb-item.rank-1{background:rgba(255,215,0,0.15);border:1px solid gold}
-        .sidebar .lb-item.rank-2{background:rgba(192,192,192,0.15);border:1px solid silver}
-        .sidebar .lb-item.rank-3{background:rgba(205,127,50,0.15);border:1px solid #cd7f32}
-        .sidebar .lb-rank{font-size:22px;font-weight:900;width:35px;text-align:center}
-        .sidebar .lb-name{flex:1;font-weight:700;font-size:12px}.sidebar .lb-score{font-weight:900;color:#1a8a4a;font-size:14px}
-        .sidebar-close{width:100%;padding:10px;border-radius:8px;border:none;background:#d94040;color:white;font-weight:700;cursor:pointer;margin-top:10px}
-        .chat-toggle{position:fixed;bottom:20px;right:15px;width:55px;height:55px;border-radius:50%;background:linear-gradient(135deg,#1a8a4a,#2d7028);color:white;border:none;font-size:24px;cursor:pointer;z-index:500;box-shadow:0 4px 20px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center}
-        .chat-badge{position:absolute;top:-5px;right:-5px;background:#F44336;color:white;width:22px;height:22px;border-radius:50%;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:700}
-        .chat-popup{position:fixed;bottom:85px;right:15px;width:320px;height:420px;background:white;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,0.3);z-index:501;display:none;flex-direction:column;overflow:hidden}
-        .chat-popup.show{display:flex}.chat-header{background:linear-gradient(135deg,#1a3a5c,#2c5f8a);color:white;padding:12px 15px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
-        .chat-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:#f5f5f5}
-        .chat-msg{max-width:85%;padding:10px 14px;border-radius:18px;font-size:12px;line-height:1.5}
-        .chat-msg.me{align-self:flex-end;background:linear-gradient(135deg,#1a8a4a,#2d7028);color:white}
-        .chat-msg.other{align-self:flex-start;background:white;color:#1a1a2e;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-        .chat-input-area{display:flex;gap:8px;padding:10px;background:white;border-top:1px solid #eee;flex-shrink:0}
-        .chat-input-area input{flex:1;padding:10px 15px;border-radius:25px;border:1.5px solid #ddd;font-family:Cairo;font-size:12px}
-        .chat-input-area button{width:40px;height:40px;border-radius:50%;background:#1a8a4a;color:white;border:none;font-size:18px;flex-shrink:0}
-        .admin-badge{background:gold;color:#000;padding:2px 8px;border-radius:10px;font-size:8px;font-weight:700}
-        
-        /* ============ إصلاح التمرير ============ */
-        .page-container{width:100%;height:100%;display:flex;flex-direction:column;position:relative}
-        .scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px;padding-bottom:80px}
-        .section-title{font-size:13px;font-weight:900;margin:12px 0 8px;font-family:'El Messiri',serif;padding-right:8px;border-right:3px solid #1a8a4a}
-        .grades{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:15px}
-        .grade{background:rgba(255,255,255,0.7);border:1.5px solid rgba(255,255,255,0.9);border-radius:14px;padding:14px 6px;cursor:pointer;text-align:center;backdrop-filter:blur(10px);transition:all 0.2s;box-shadow:0 2px 10px rgba(0,0,0,0.05)}
-        .grade:active{transform:scale(0.95)}.grade .g-icon{font-size:26px;margin-bottom:4px}.grade .g-name{font-size:10px;font-weight:900;font-family:'El Messiri',serif}
-        
-        .units-header{background:linear-gradient(135deg,#1a3a5c,#2c5f8a);padding:10px 12px;color:white;display:flex;align-items:center;gap:8px;font-family:'El Messiri',serif;font-size:13px;font-weight:700;flex-shrink:0}
-        .units-header button{background:rgba(255,255,255,0.15);border:none;color:white;width:28px;height:28px;border-radius:6px;font-size:14px;cursor:pointer}
-        .units-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 8px 30px}
-        .unit-card{background:rgba(255,255,255,0.7);border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:0 2px 10px rgba(0,0,0,0.05);border-right:3px solid #1a8a4a;backdrop-filter:blur(10px)}
-        .unit-card .uc-header{display:flex;align-items:center;gap:6px;margin-bottom:4px}
-        .unit-card .uc-icon{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#1a8a4a;background:rgba(26,138,74,0.1);border:1.5px solid #1a8a4a;font-size:13px;flex-shrink:0}
-        .unit-card .uc-name{font-size:11px;font-weight:700;flex:1}.unit-card .uc-count{font-size:8px;color:#666;background:rgba(0,0,0,0.05);padding:2px 7px;border-radius:6px}
-        .unit-card .uc-lessons{font-size:9px;color:#666;padding-right:36px;margin-bottom:6px;line-height:1.5}
-        .unit-card .uc-actions{display:flex;gap:5px;padding-right:36px}
-        .unit-btn{padding:6px 10px;border-radius:7px;border:1.5px solid rgba(0,0,0,0.1);cursor:pointer;font-size:9px;font-weight:600;background:white;transition:all 0.2s}
-        .unit-btn:active{transform:scale(0.95)}.unit-btn.primary{background:#1a8a4a;color:white}.unit-btn.outline{border-color:#2c5f8a;color:#2c5f8a}
-        .quiz-screen{width:100%;height:100%;display:flex;flex-direction:column;background:#eef3f8}
-        .quiz-top-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;color:white;font-size:12px;font-weight:600;background:linear-gradient(135deg,#1a3a5c,#2c5f8a);flex-shrink:0}
-        .q-btn-sm{width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,0.2);border:none;color:white;font-size:13px;cursor:pointer}
-        .quiz-body{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column}
-        .q-card{background:rgba(255,255,255,0.7);border-radius:18px;padding:14px;backdrop-filter:blur(10px);flex:1;animation:pop 0.4s;box-shadow:0 4px 20px rgba(0,0,0,0.08);display:flex;flex-direction:column}
-        @keyframes pop{0%{opacity:0;transform:scale(0.9)}100%{opacity:1;transform:scale(1)}}
-        .q-card.correct-card{box-shadow:0 0 0 3px #4CAF50}.q-card.wrong-card{box-shadow:0 0 0 3px #FF5252}
-        .q-text{font-size:14px;font-weight:700;line-height:1.6;margin-bottom:8px;font-family:'El Messiri',serif}
-        .q-options{display:flex;flex-direction:column;gap:5px;flex:1}
-        .q-opt{display:flex;align-items:center;gap:8px;padding:10px;border-radius:8px;border:1.5px solid rgba(0,0,0,0.1);background:rgba(255,255,255,0.5);cursor:pointer;font-size:11px;transition:all 0.3s}
-        .q-opt .opt-indicator{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;border:1.5px solid #999;color:#666;background:white}
-        .q-opt.correct{background:rgba(120,220,150,0.5)!important;border-color:#4CAF50!important}.q-opt.correct .opt-indicator{background:#4CAF50!important;color:white!important}
-        .q-opt.wrong{background:rgba(255,110,110,0.4)!important;border-color:#FF5252!important}.q-opt.wrong .opt-indicator{background:#FF5252!important;color:white!important}
-        .q-opt.disabled{pointer-events:none;opacity:0.6}
-        .score-screen{padding:20px;text-align:center;flex:1;overflow-y:auto}
-        .score-ring{width:100px;height:100px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:4px solid #1a8a4a;color:#1a8a4a;font-size:30px;font-weight:900;margin:10px}
-        .btn{color:white;border:none;padding:10px;border-radius:10px;font-size:13px;font-weight:700;width:100%;cursor:pointer;margin-top:5px;font-family:'Cairo',sans-serif;background:#1a8a4a}
-        .btn-outline{background:rgba(255,255,255,0.7);color:#1a1a2e;border:1.5px solid rgba(0,0,0,0.1);padding:10px;border-radius:10px;font-size:13px;font-weight:700;width:100%;cursor:pointer;margin-top:5px}
-        .loading-screen{text-align:center;padding:50px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center}
-        .loading-spinner{width:35px;height:35px;border:3px solid #ddd;border-top-color:#1a8a4a;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-        .dialog-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:10000;display:flex;align-items:center;justify-content:center;padding:12px}
-        .dialog-box{background:rgba(255,255,255,0.9);border-radius:18px;padding:18px 14px;width:100%;max-width:370px;backdrop-filter:blur(16px);animation:pop 0.4s;max-height:90vh;overflow-y:auto}
-        .dialog-box h3{font-family:'El Messiri',serif;text-align:center;font-size:15px;margin-bottom:5px}
-        .time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
-        .time-opt{padding:8px 4px;border-radius:7px;border:1.5px solid rgba(0,0,0,0.1);text-align:center;cursor:pointer;font-size:9px;font-weight:600;background:white}.time-opt.sel{background:#1a8a4a;color:white}
-        .dialog-actions{display:flex;gap:5px;margin:10px -14px -18px;padding:10px 14px 16px;position:sticky;bottom:0;background:rgba(255,255,255,0.9);border-top:1px solid rgba(0,0,0,0.1)}
-        .dialog-btn{padding:11px;border-radius:10px;border:none;font-size:13px;font-weight:700;cursor:pointer;flex:1;text-align:center}.dialog-btn.primary{background:#1a8a4a;color:white}.dialog-btn.secondary{background:white;color:#666;border:1.5px solid rgba(0,0,0,0.1)}
-        .lesson-list{display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto}
-        .lesson-chk{display:flex;align-items:center;gap:6px;padding:8px 9px;border-radius:7px;border:1.5px solid rgba(0,0,0,0.1);cursor:pointer;font-size:10px;font-weight:600;background:white}
-        .lesson-chk.checked{background:rgba(26,138,74,0.1);border-color:#1a8a4a}.lesson-chk .chk-box{width:16px;height:16px;border-radius:3px;border:2px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:transparent}
-        .lesson-chk.checked .chk-box{background:#1a8a4a;border-color:#1a8a4a;color:white}
-        .admin-panel{background:#1a1a2e;color:white;padding:15px;max-height:80vh;overflow-y:auto}
-        .admin-panel select,.admin-panel input,.admin-panel textarea{width:100%;padding:8px;border-radius:6px;border:none;margin:4px 0;font-family:Cairo;font-size:12px}
-        .admin-panel textarea{resize:vertical;min-height:100px;font-family:monospace;direction:ltr;font-size:10px}
-        .admin-panel label{font-size:10px;color:#aaa;display:block;margin-top:5px}
-        .admin-panel button{padding:8px 15px;border-radius:6px;border:none;cursor:pointer;font-weight:700;font-family:Cairo;margin:3px;font-size:11px}
-        .btn-gold{background:linear-gradient(135deg,#d4af37,#f5e6a3);color:#1a1a2e}.btn-red{background:#d94040;color:white}.btn-blue{background:#2c5f8a;color:white}.btn-orange{background:#ff9800;color:white}
-        .q-block{background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;margin:8px 0;border:1px solid rgba(255,255,255,0.1)}
-        .name-prompt{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}
-        .name-prompt .name-card{background:white;border-radius:20px;padding:30px;text-align:center;max-width:350px;width:100%}
-        .name-prompt input{width:100%;padding:12px;border-radius:10px;border:1.5px solid #ddd;font-family:Cairo;font-size:14px;text-align:center;margin-bottom:10px}
-        .challenge-card{background:rgba(255,255,255,0.9);border-radius:15px;padding:15px;margin:10px 0;text-align:center;border:2px solid #ff9800}
-        .challenge-card h3{color:#ff9800;font-family:'El Messiri',serif}.challenge-card .vs{font-size:30px;font-weight:900;color:#ff9800;margin:10px 0}
-        .challenge-link{background:#f5f5f5;border:1px dashed #999;padding:10px;border-radius:8px;font-size:10px;word-break:break-all;margin:10px 0;user-select:all}
-        .challenge-item{background:rgba(255,255,255,0.8);border-radius:10px;padding:12px;margin:8px 0;display:flex;align-items:center;gap:10px;font-size:10px;border:1px solid #ff9800}
-        .copy-btn{background:#2c5f8a;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-size:9px;font-family:Cairo}
-        .challenge-btn{background:linear-gradient(135deg,#ff9800,#f57c00);color:white;border:none;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:'Cairo',sans-serif;font-size:10px;margin:5px 0;width:100%}
-        .word-item{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.05);padding:8px;border-radius:6px;margin:4px 0;font-size:10px}
-        @media(max-width:400px){.chat-popup{width:90vw;right:5vw;bottom:75px}}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0097A7">
+<title>منصة علوش التعليمية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- ★ Firebase SDK ★ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg:#f4f7f9;--surface:#fff;--surface-2:#f8fafb;--text:#0f2430;--text-2:#3a4a55;--muted:#7a8a95;--primary:#0097A7;--primary-d:#00788a;--primary-l:#e0f4f7;--accent:#00BCD4;--green:#16a34a;--green-l:#e7f8ec;--red:#e53935;--red-l:#fdecea;--gold:#f59e0b;--gold-l:#fff5e0;--line:#e6edf1;--line-2:#d6e0e6;--shadow-sm:0 1px 3px rgba(15,36,48,.06);--shadow:0 6px 20px rgba(15,36,48,.08);--shadow-lg:0 18px 45px rgba(15,36,48,.12);--radius:18px;--radius-lg:22px;--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Cairo',Tahoma,Arial,sans-serif;font-weight:600;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%;overscroll-behavior-y:none}
+input,textarea,select{font-family:inherit;-webkit-user-select:text;user-select:text;font-size:15px}
+body{overflow-x:hidden;min-height:100vh}
+button{cursor:pointer;border:0;font-family:inherit;font-weight:700;color:inherit}
+.hidden{display:none!important}svg{display:block}
+.app{min-height:100vh;display:flex;flex-direction:column;background:radial-gradient(circle at 90% 0%,rgba(0,151,167,.08),transparent 35%),radial-gradient(circle at 0% 20%,rgba(0,188,212,.05),transparent 30%),var(--bg);padding-bottom:calc(78px + var(--safe-bottom))}
+.topbar{position:sticky;top:0;z-index:40;padding:calc(8px + var(--safe-top)) 14px 8px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.9);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;box-shadow:0 6px 16px rgba(0,151,167,.35)}
+.logo svg{width:20px;height:20px}
+.brand-text{min-width:0}
+.brand-text b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-text small{display:block;color:var(--muted);font-size:10px;font-weight:600;margin-top:1px}
+.top-actions{display:flex;gap:6px;align-items:center}
+.icon-btn{width:36px;height:36px;border-radius:11px;background:var(--surface);color:var(--text-2);border:1px solid var(--line);display:grid;place-items:center;box-shadow:var(--shadow-sm)}
+.icon-btn:active{transform:scale(.94);background:var(--primary-l);color:var(--primary-d);border-color:var(--primary)}
+.icon-btn svg{width:17px;height:17px}
+.avatar-btn{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent));display:grid;place-items:center;font-size:19px;color:#fff;border:2px solid #fff;box-shadow:var(--shadow-sm);overflow:hidden;padding:0}
+.avatar-btn img{width:100%;height:100%;object-fit:cover}
+.container{max-width:1100px;width:100%;margin:0 auto;padding:14px 14px 18px}
+.primary{background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;padding:9px 14px;border-radius:11px;font-weight:800;font-size:12.5px;box-shadow:0 4px 12px rgba(0,151,167,.28);display:inline-flex;align-items:center;gap:5px;justify-content:center;white-space:nowrap}
+.primary:active{transform:scale(.97)}
+.primary svg{width:15px;height:15px}
+.secondary{background:var(--surface);color:var(--text-2);border:1px solid var(--line-2);padding:9px 14px;border-radius:11px;font-weight:800;font-size:12.5px;display:inline-flex;align-items:center;gap:5px;justify-content:center;white-space:nowrap}
+.secondary svg{width:14px;height:14px}
+.danger{background:var(--red-l);color:var(--red);border:1px solid rgba(229,57,53,.2);padding:8px 12px;border-radius:10px;font-weight:800;font-size:12px;display:inline-flex;align-items:center;gap:5px}
+.danger svg{width:13px;height:13px}
+.success{background:var(--green-l);color:var(--green);border:1px solid rgba(22,163,74,.2);padding:8px 12px;border-radius:10px;font-weight:800;font-size:12px;display:inline-flex;align-items:center;gap:5px}
+.success svg{width:13px;height:13px}
+.warn{background:var(--gold-l);color:#b45309;border:1px solid rgba(245,158,11,.25);padding:8px 12px;border-radius:10px;font-weight:800;font-size:12px;display:inline-flex;align-items:center;gap:5px}
+.warn svg{width:13px;height:13px}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+.hero{display:grid;grid-template-columns:1.4fr .9fr;gap:14px;margin-bottom:18px}
+.hero-main{padding:22px;border-radius:var(--radius-lg);position:relative;overflow:hidden;background:linear-gradient(135deg,#fff,#f0fafb);border:1px solid var(--line);box-shadow:var(--shadow)}
+.hero-main::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(0,151,167,.15),transparent 70%);left:-100px;bottom:-140px}
+.eyebrow{display:inline-flex;align-items:center;gap:5px;background:var(--primary-l);color:var(--primary-d);padding:5px 10px;border-radius:100px;font-size:11px;font-weight:800}
+.hero h1{font-size:clamp(20px,4vw,30px);margin:12px 0 8px;line-height:1.35;font-weight:900}
+.hero h1 .hl{color:var(--primary)}
+.hero p{color:var(--muted);line-height:1.85;font-size:13px;margin-bottom:16px;font-weight:500}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.stat{padding:13px;border-radius:15px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.stat b{font-size:22px;display:block;font-weight:900}
+.stat span{font-size:11px;color:var(--muted);font-weight:700}
+.stat.teal b{color:var(--primary)}.stat.green b{color:var(--green)}.stat.gold b{color:var(--gold)}.stat.red b{color:var(--red)}
+.hero-side{padding:16px;border-radius:var(--radius-lg);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.notice{padding:11px 13px;border-radius:12px;background:var(--primary-l);border:1px solid rgba(0,151,167,.15);color:var(--primary-d);font-size:11.5px;line-height:1.75;font-weight:600;display:flex;gap:7px;align-items:flex-start}
+.notice svg{width:15px;height:15px;flex-shrink:0;margin-top:2px}
+.notice.warn-note{background:var(--gold-l);border-color:rgba(245,158,11,.25);color:#92400e}
+.notice.ok-note{background:var(--green-l);border-color:rgba(22,163,74,.2);color:#166534}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:20px 2px 11px}
+.section-title h2{font-size:16px;margin:0;font-weight:900;display:flex;align-items:center;gap:6px}
+.section-title h2 svg{width:18px;height:18px;color:var(--primary)}
+.section-title span{color:var(--muted);font-size:11px;font-weight:700}
+.search{position:relative;margin-bottom:12px}
+.search svg{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted);pointer-events:none}
+.search input,.field input,.field textarea,.field select{width:100%;background:var(--surface);border:1px solid var(--line);color:var(--text);border-radius:12px;padding:11px 12px;outline:none;font-size:13.5px;font-weight:600}
+.search input{padding-right:38px}
+.search input:focus,.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,151,167,.12)}
+.field textarea{resize:vertical;min-height:72px;line-height:1.7;font-size:12.5px}
+.field textarea.code{direction:ltr;text-align:left;font-family:Consolas,Menlo,monospace;font-size:12px;line-height:1.55}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1/-1}
+.field label{font-size:11.5px;color:var(--text-2);font-weight:800}
+.subject-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.subject{padding:16px;border-radius:var(--radius);background:var(--surface);border:1px solid var(--line);position:relative;overflow:hidden;box-shadow:var(--shadow-sm);cursor:pointer}
+.subject:active{transform:scale(.98)}
+.subject::before{content:"";position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--accent));opacity:0;transition:.2s}
+.subject:hover::before{opacity:1}
+.subject .emoji{font-size:28px;width:50px;height:50px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary-l),#f0fafb);margin-bottom:10px}
+.subject h3{margin:0 0 5px;font-size:14px;font-weight:800}
+.subject p{color:var(--muted);font-size:11.5px;margin:0 0 11px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.progress{height:5px;border-radius:99px;background:var(--line);overflow:hidden}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:99px}
+.subject-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:10.5px;margin-top:7px;font-weight:700}
+.subject-meta span:last-child{color:var(--primary);font-weight:800}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--text-2);margin-bottom:12px;background:var(--surface);padding:8px 12px;border-radius:10px;border:1px solid var(--line);font-size:12px;font-weight:800;box-shadow:var(--shadow-sm)}
+.back svg{width:14px;height:14px}
+.breadcrumb{color:var(--muted);font-size:11px;margin-bottom:5px;font-weight:700}
+.unit{margin-bottom:10px}
+.unit-head{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;background:var(--surface);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow-sm)}
+.unit-title{display:flex;gap:10px;align-items:center}
+.unit-num{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;display:grid;place-items:center;font-weight:900;font-size:14px;flex-shrink:0}
+.unit-title b{font-size:13.5px}
+.unit-title small{color:var(--muted);font-size:10.5px;font-weight:700;display:block;margin-top:1px}
+.lesson-list{padding:7px 0 0;display:flex;flex-direction:column;gap:6px}
+.lesson{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px;background:var(--surface);border:1px solid var(--line);border-radius:13px}
+.lesson-info{display:flex;gap:9px;align-items:center;min-width:0;flex:1}
+.lesson-icon{width:34px;height:34px;border-radius:10px;background:var(--primary-l);color:var(--primary-d);display:grid;place-items:center;flex-shrink:0}
+.lesson-icon svg{width:15px;height:15px}
+.lesson-info b{font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lesson-info small{color:var(--muted);font-size:10.5px;display:block;margin-top:1px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quiz-head{padding:16px;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;margin-bottom:12px;box-shadow:0 10px 24px rgba(0,151,167,.3);position:relative;overflow:hidden}
+.quiz-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px;position:relative}
+.quiz-bar b{font-size:14px;display:block}
+.quiz-bar small{opacity:.85;font-size:10.5px;font-weight:600}
+.timer{padding:7px 11px;border-radius:10px;background:rgba(255,255,255,.2);color:#fff;font-weight:900;font-size:13px;display:flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+.timer svg{width:13px;height:13px}
+.quiz-head .progress{background:rgba(255,255,255,.25);height:6px}
+.quiz-head .progress i{background:#fff}
+.question-card{padding:18px;border-radius:var(--radius-lg);background:var(--surface);border:1px solid var(--line);margin-bottom:12px;box-shadow:var(--shadow)}
+.qtop{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-bottom:11px;font-weight:800}
+.qtop .chip{padding:4px 9px;border-radius:100px;background:var(--primary-l);color:var(--primary-d);font-size:10.5px}
+.question{font-size:16px;line-height:1.8;font-weight:800;margin-bottom:15px}
+.options{display:flex;flex-direction:column;gap:8px}
+.option{display:flex;align-items:center;gap:10px;text-align:right;width:100%;padding:12px 13px;border-radius:13px;background:var(--surface-2);border:1.5px solid var(--line);color:var(--text);font-size:13px;font-weight:700;line-height:1.6}
+.option:hover{border-color:var(--primary);background:var(--primary-l)}
+.option.selected{border-color:var(--primary);background:var(--primary-l);color:var(--primary-d);box-shadow:0 0 0 3px rgba(0,151,167,.1)}
+.option.correct{border-color:var(--green);background:var(--green-l);color:#166534}
+.option.wrong{border-color:var(--red);background:var(--red-l);color:#991b1b}
+.option:disabled{cursor:default}
+.option .badge{min-width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:#fff;color:var(--text-2);font-weight:900;font-size:12px;border:1px solid var(--line);flex-shrink:0}
+.option.selected .badge{background:var(--primary);color:#fff;border-color:var(--primary)}
+.option.correct .badge{background:var(--green);color:#fff;border-color:var(--green)}
+.option.wrong .badge{background:var(--red);color:#fff;border-color:var(--red)}
+.option .check{margin-right:auto;width:18px;height:18px;color:var(--green)}
+.option .x{margin-right:auto;width:18px;height:18px;color:var(--red)}
+.feedback{margin-top:12px;padding:11px 14px;border-radius:12px;font-size:12.5px;font-weight:700;display:flex;gap:7px;align-items:flex-start;line-height:1.7}
+.feedback.ok{background:var(--green-l);color:#166534;border:1px solid rgba(22,163,74,.2)}
+.feedback.no{background:var(--red-l);color:#991b1b;border:1px solid rgba(229,57,53,.2)}
+.feedback svg{width:16px;height:16px;flex-shrink:0;margin-top:2px}
+.result{padding:24px 18px;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow)}
+.score-circle{width:140px;height:140px;border-radius:50%;display:grid;place-items:center;margin:0 auto 16px;position:relative}
+.score-circle::after{content:"";position:absolute;inset:10px;background:var(--surface);border-radius:50%}
+.score-circle b{position:relative;z-index:1;font-size:30px;font-weight:900}
+.score-circle small{position:relative;z-index:1;display:block;font-size:10px;color:var(--muted);font-weight:700}
+.result h2{font-size:18px;font-weight:900;margin:8px 0 5px}
+.result p{color:var(--muted);font-size:12.5px;line-height:1.8;font-weight:600}
+.card{padding:6px;border-radius:16px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-sm)}
+.result-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-radius:12px}
+.result-row+.result-row{border-top:1px solid var(--line)}
+.result-row .pct{font-weight:900;font-size:13px;padding:5px 10px;border-radius:100px;background:var(--primary-l);color:var(--primary-d)}
+.result-row .pct.good{background:var(--green-l);color:#166534}
+.result-row .pct.bad{background:var(--red-l);color:#991b1b}
+.empty{text-align:center;padding:38px 18px;color:var(--muted);background:var(--surface);border:1px dashed var(--line-2);border-radius:18px;font-weight:700;font-size:13px;line-height:1.9}
+.empty svg{width:48px;height:48px;color:var(--line-2);margin:0 auto 12px}
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:9px;align-items:end;margin-bottom:16px}
+.podium-item{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 8px;text-align:center;box-shadow:var(--shadow-sm);position:relative}
+.podium-item.first{background:linear-gradient(160deg,#fff9e6,#fff5e0);border-color:rgba(245,158,11,.3);padding-top:20px;padding-bottom:20px}
+.podium-item.second{background:linear-gradient(160deg,#f0f4f8,#e9eef4)}
+.podium-item.third{background:linear-gradient(160deg,#fdf1ea,#fbe7d8)}
+.podium-crown{position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:22px}
+.podium-avatar{width:54px;height:54px;border-radius:50%;margin:0 auto 7px;display:grid;place-items:center;font-size:26px;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:3px solid #fff;overflow:hidden}
+.podium-item.first .podium-avatar{width:64px;height:64px;font-size:30px}
+.podium-avatar img{width:100%;height:100%;object-fit:cover}
+.podium-item b{display:block;font-size:12px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.podium-item .pts{display:inline-flex;align-items:center;gap:3px;margin-top:5px;background:var(--primary-l);color:var(--primary-d);padding:3px 9px;border-radius:100px;font-size:10.5px;font-weight:900}
+.podium-item.first .pts{background:var(--gold-l);color:#b45309}
+.rank-num{position:absolute;top:7px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:900}
+.podium-item.first .rank-num{background:var(--gold)}
+.podium-item.second .rank-num{background:#94a3b8}
+.podium-item.third .rank-num{background:#c2692c}
+.lb-list{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm)}
+.lb-row{display:flex;align-items:center;gap:10px;padding:11px 13px;border-bottom:1px solid var(--line)}
+.lb-row:last-child{border-bottom:0}
+.lb-row.me{background:var(--primary-l)}
+.lb-row .pos{width:28px;height:28px;border-radius:9px;background:var(--surface-2);color:var(--text-2);display:grid;place-items:center;font-weight:900;font-size:12px;flex-shrink:0}
+.lb-row .pos.top{background:var(--gold);color:#fff}
+.lb-avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:18px;background:linear-gradient(135deg,var(--primary-l),#d5f0f3);overflow:hidden;flex-shrink:0;border:2px solid #fff}
+.lb-avatar img{width:100%;height:100%;object-fit:cover}
+.lb-info{flex:1;min-width:0}
+.lb-info b{display:block;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-info small{display:block;font-size:10.5px;color:var(--muted);font-weight:700;margin-top:1px}
+.lb-pts{font-weight:900;color:var(--primary);font-size:13.5px;display:flex;align-items:center;gap:3px}
+.lb-pts svg{width:12px;height:12px;color:var(--gold)}
+.profile-header{padding:20px;border-radius:var(--radius-lg);background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;margin-bottom:12px;position:relative;overflow:hidden}
+.profile-header::before{content:"";position:absolute;top:-60px;right:-60px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.15),transparent 70%)}
+.profile-top{display:flex;align-items:center;gap:14px;position:relative}
+.profile-avatar{width:70px;height:70px;border-radius:50%;display:grid;place-items:center;font-size:34px;background:rgba(255,255,255,.2);border:3px solid rgba(255,255,255,.5);overflow:hidden;flex-shrink:0}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-info{min-width:0;flex:1}
+.profile-info h2{margin:0 0 4px;font-size:18px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-info .rank-line{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;opacity:.9;flex-wrap:wrap}
+.device-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.18);padding:3px 8px;border-radius:100px;font-size:10px;font-weight:800;margin-top:6px;font-variant-numeric:tabular-nums}
+.device-chip svg{width:11px;height:11px}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.15);position:relative}
+.profile-stat{text-align:center}
+.profile-stat b{display:block;font-size:20px;font-weight:900;color:#fff}
+.profile-stat span{font-size:10px;font-weight:700;opacity:.8}
+.profile-section{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:10px;box-shadow:var(--shadow-sm)}
+.profile-section h3{margin:0 0 10px;font-size:13.5px;font-weight:900;display:flex;align-items:center;gap:6px}
+.profile-section h3 svg{width:16px;height:16px;color:var(--primary)}
+.avatar-picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:7px}
+.avatar-opt{aspect-ratio:1;border-radius:13px;background:var(--surface-2);border:2px solid var(--line);display:grid;place-items:center;font-size:24px;padding:0}
+.avatar-opt.selected{border-color:var(--primary);background:var(--primary-l);transform:scale(1.05)}
+.admin-grid{display:grid;grid-template-columns:210px 1fr;gap:14px}
+.admin-nav{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:8px;height:max-content;position:sticky;top:90px;box-shadow:var(--shadow-sm)}
+.admin-nav button{width:100%;padding:10px 12px;text-align:right;background:transparent;color:var(--text-2);border-radius:10px;margin-bottom:3px;font-weight:800;font-size:12px;display:flex;align-items:center;gap:8px}
+.admin-nav button svg{width:15px;height:15px;flex-shrink:0}
+.admin-nav button.active{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(0,151,167,.28)}
+.admin-nav button:not(.active):hover{background:var(--primary-l);color:var(--primary-d)}
+.admin-content{min-width:0}
+.admin-card{padding:16px;border-radius:16px;background:var(--surface);border:1px solid var(--line);margin-bottom:12px;box-shadow:var(--shadow-sm)}
+.admin-card h3{margin:0 0 10px;font-size:14px;font-weight:900;display:flex;align-items:center;gap:6px}
+.admin-card h3 svg{width:16px;height:16px;color:var(--primary)}
+.table-wrap{overflow:auto;border-radius:13px;border:1px solid var(--line);background:var(--surface)}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th,td{padding:10px 11px;border-bottom:1px solid var(--line);text-align:right;font-size:12px}
+th{color:var(--text-2);background:var(--surface-2);font-weight:800;font-size:11px}
+td{color:var(--text);font-weight:700}
+tr:last-child td{border-bottom:0}
+.mono{font-family:Consolas,Menlo,monospace;direction:ltr;text-align:right;font-size:11px;letter-spacing:.2px}
+.tree-subject{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.tree-subj-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:linear-gradient(135deg,var(--primary-l),#f0fafb);border-radius:11px;margin-bottom:8px}
+.tree-subj-head .ttl{display:flex;align-items:center;gap:8px;font-weight:900;font-size:13.5px}
+.tree-subj-head .ttl .icon-box{font-size:20px}
+.tree-unit{border-right:3px solid var(--primary-l);padding-right:10px;margin:8px 0}
+.tree-unit-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 9px;background:var(--surface-2);border-radius:10px;margin-bottom:6px}
+.tree-unit-head .u-ttl{font-weight:800;font-size:12.5px;color:var(--text-2);display:flex;align-items:center;gap:6px}
+.tree-unit-head .u-ttl svg{width:14px;height:14px;color:var(--primary)}
+.tree-lesson{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:9px;margin-bottom:5px}
+.tree-lesson-info{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+.tree-lesson-info b{font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tree-lesson-info small{color:var(--primary-d);font-size:10.5px;font-weight:700;background:var(--primary-l);padding:2px 7px;border-radius:100px}
+.mini-btn{padding:5px 8px;border-radius:8px;font-size:11px;font-weight:800;display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line-2);color:var(--text-2)}
+.mini-btn.danger{background:var(--red-l);color:var(--red);border-color:rgba(229,57,53,.2)}
+.mini-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.mini-btn.gold{background:var(--gold-l);color:#b45309;border-color:rgba(245,158,11,.25)}
+.mini-btn svg{width:12px;height:12px}
+.icon-picker{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;max-height:180px;overflow-y:auto;padding:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px}
+.icon-opt{aspect-ratio:1;border-radius:10px;background:var(--surface);border:2px solid transparent;display:grid;place-items:center;font-size:20px;padding:0}
+.icon-opt.selected{border-color:var(--primary);background:var(--primary-l);transform:scale(1.05)}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.modal{position:fixed;inset:0;z-index:100;background:rgba(15,36,48,.55);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:14px}
+.modal.show{display:flex}
+.modal-box{width:min(620px,100%);max-height:88vh;overflow:auto;background:var(--surface);border-radius:20px;padding:18px;box-shadow:0 30px 70px rgba(0,0,0,.3)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.modal-head h2{margin:0;font-size:15px;font-weight:900}
+.toast{position:fixed;bottom:calc(94px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(30px);z-index:200;background:#0f2430;color:#fff;padding:11px 16px;border-radius:12px;font-weight:800;font-size:12px;opacity:0;pointer-events:none;transition:.25s;box-shadow:0 12px 30px rgba(0,0,0,.25);white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:35;background:rgba(255,255,255,.95);backdrop-filter:blur(20px);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 6px calc(6px + var(--safe-bottom));box-shadow:0 -4px 20px rgba(15,36,48,.05)}
+.bottom-nav button{flex:1;background:transparent;color:var(--muted);padding:6px 2px;border-radius:12px;font-size:10px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.bottom-nav button svg{width:19px;height:19px}
+.bottom-nav button.active{color:var(--primary)}
+.bottom-nav button.active::before{content:"";position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:28px;height:3px;background:var(--primary);border-radius:0 0 5px 5px}
+.login{min-height:100vh;display:grid;place-items:center;padding:18px;background:radial-gradient(circle at 80% 20%,rgba(0,151,167,.1),transparent 35%),radial-gradient(circle at 10% 80%,rgba(0,188,212,.08),transparent 35%),var(--bg);padding-top:calc(18px + var(--safe-top));padding-bottom:calc(18px + var(--safe-bottom))}
+.login-box{width:min(420px,100%);padding:26px 22px;border-radius:22px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-lg);text-align:center}
+.login-logo{width:64px;height:64px;margin:0 auto 14px;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;box-shadow:0 12px 28px rgba(0,151,167,.35);font-size:28px}
+.login-logo svg{width:32px;height:32px}
+.login-box h2{margin:0 0 4px;font-size:19px;font-weight:900}
+.login-box>p{color:var(--muted);font-size:12.5px;margin:0 0 18px;font-weight:600}
+.login-field{text-align:right;margin-bottom:12px}
+.login-field label{display:block;font-size:11.5px;color:var(--text-2);font-weight:800;margin-bottom:6px}
+.login-field input{width:100%;background:var(--surface-2);border:1.5px solid var(--line);color:var(--text);border-radius:12px;padding:12px 14px;outline:none;font-size:14px;font-weight:700}
+.login-field input:focus{border-color:var(--primary);background:#fff;box-shadow:0 0 0 3px rgba(0,151,167,.12)}
+.device-box{background:var(--primary-l);border:1px solid rgba(0,151,167,.15);border-radius:13px;padding:12px 13px;text-align:right}
+.device-box .lbl{font-size:11px;color:var(--primary-d);font-weight:800;display:flex;align-items:center;gap:5px;margin-bottom:6px}
+.device-box .lbl svg{width:13px;height:13px}
+.device-box .val{font-family:Consolas,Menlo,monospace;font-size:13px;font-weight:900;color:var(--primary-d);direction:ltr;text-align:center;letter-spacing:.5px;background:rgba(255,255,255,.6);padding:7px 10px;border-radius:9px}
+.device-box .sub{font-size:10.5px;color:var(--primary-d);font-weight:700;margin-top:6px;opacity:.85;display:flex;align-items:center;gap:4px;justify-content:center}
+.device-box .sub svg{width:11px;height:11px}
+.login-btn{width:100%;padding:13px;border-radius:13px;background:linear-gradient(135deg,var(--primary),var(--primary-d));color:#fff;font-weight:900;font-size:14px;box-shadow:0 8px 20px rgba(0,151,167,.3);display:flex;align-items:center;justify-content:center;gap:7px;margin-top:6px}
+.login-btn svg{width:17px;height:17px}
+.login-note{color:var(--muted);font-size:10.5px;margin-top:14px;line-height:1.7;font-weight:600}
+.banned-box{background:#fff;border:2px solid rgba(229,57,53,.25);box-shadow:0 20px 50px rgba(229,57,53,.15)}
+.banned-box .login-logo{background:linear-gradient(135deg,#e53935,#c62828)}
+.banned-box h2{color:var(--red)}
+.cloud-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:100px;font-size:10.5px;font-weight:800}
+.cloud-badge.on{background:var(--green-l);color:#166534;border:1px solid rgba(22,163,74,.2)}
+.cloud-badge.off{background:var(--red-l);color:#991b1b;border:1px solid rgba(229,57,53,.2)}
+.cloud-badge.checking{background:var(--gold-l);color:#92400e;border:1px solid rgba(245,158,11,.2)}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.mode-card{padding:15px;border-radius:15px;background:var(--surface);border:2px solid var(--line);text-align:right;cursor:pointer}
+.mode-card:hover,.mode-card:active{border-color:var(--primary);background:var(--primary-l)}
+.mode-card .mi{width:40px;height:40px;border-radius:12px;background:var(--primary);color:#fff;display:grid;place-items:center;margin-bottom:9px}
+.mode-card .mi svg{width:19px;height:19px}
+.mode-card h4{margin:0 0 4px;font-size:13.5px;font-weight:900}
+.mode-card p{margin:0;font-size:11px;color:var(--muted);font-weight:600;line-height:1.6}
+.code-sample{background:#0f2430;color:#a5d6d9;border-radius:10px;padding:10px 12px;font-family:Consolas,Menlo,monospace;font-size:10.5px;line-height:1.55;direction:ltr;text-align:left;overflow-x:auto;white-space:pre;margin-top:6px}
+@media(max-width:850px){.hero{grid-template-columns:1fr}.subject-grid{grid-template-columns:repeat(2,1fr)}.admin-grid{grid-template-columns:1fr}.admin-nav{position:static;display:flex;overflow-x:auto;gap:5px;padding:6px}.admin-nav button{min-width:max-content;width:auto;margin:0}.form-grid{grid-template-columns:1fr}.icon-picker{grid-template-columns:repeat(6,1fr)}}
+@media(max-width:520px){.container{padding:12px 10px 16px}.hero-main{padding:18px 16px}.subject-grid{grid-template-columns:1fr}.question{font-size:15px}.question-card{padding:15px}.podium-avatar{width:48px;height:48px;font-size:22px}.podium-item.first .podium-avatar{width:56px;height:56px;font-size:26px}.stat b{font-size:19px}.mode-grid{grid-template-columns:1fr}.profile-avatar{width:60px;height:60px;font-size:28px}.icon-picker{grid-template-columns:repeat(5,1fr)}}
+</style>
 </head>
 <body>
-
-<div id="namePrompt" class="name-prompt"><div class="name-card"><div style="font-size:50px;margin-bottom:10px">👤</div><h3 style="font-family:'El Messiri',serif;margin-bottom:15px">أدخل اسمك للدخول</h3><input type="text" id="studentName" placeholder="اسمك الكريم"><button onclick="saveName()" style="width:100%;padding:12px;background:#1a8a4a;color:white;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:Cairo">🚀 دخول</button></div></div>
-
-<div id="mainApp">
-    <!-- الصفحة الرئيسية -->
-    <div id="homePage" class="page-container" style="display:flex">
-        <div class="header">
-            <button class="h-icon" onclick="openSidebar()" style="right:10px">🏆</button>
-            <button class="h-icon" onclick="openChallenges()" style="right:50px">🎯</button>
-            <span id="secretTitle" onclick="secretClick()">📖 بكالوريا علمي</span>
-        </div>
-        <div style="text-align:center;padding:6px;font-family:'Scheherazade New',serif;font-size:16px;opacity:0.6;flex-shrink:0">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
-        <div id="newsContainer" style="flex-shrink:0"></div>
-        <div id="linksContainer" style="flex-shrink:0"></div>
-        <div class="scroll-area" id="subjectsGrid"></div>
-    </div>
-    
-    <!-- صفحة الوحدات -->
-    <div id="unitsPage" class="page-container" style="display:none">
-        <div class="units-screen" id="unitsScreen"></div>
-    </div>
-    
-    <!-- صفحة الاختبار -->
-    <div id="quizPage" class="page-container" style="display:none">
-        <div class="quiz-screen" id="quizScreen"></div>
-    </div>
-</div>
-
-<div class="dialog-overlay" id="dialogOverlay" style="display:none"></div>
-<div class="dialog-overlay" id="challengeOverlay" style="display:none"></div>
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-<div class="sidebar" id="sidebar"><h3>🏆 لوحة المتصدرين</h3><div id="leaderboardList"></div><button class="sidebar-close" onclick="closeSidebar()">❌ إغلاق</button></div>
-<button class="chat-toggle" onclick="toggleChat()">💬<span class="chat-badge" id="chatBadge" style="display:none">0</span></button>
-<div class="chat-popup" id="chatPopup"><div class="chat-header"><h3>💬 شات الطلاب</h3><button class="chat-close" onclick="toggleChat()">✕</button></div><div class="chat-messages" id="chatMessages"><p class="chat-empty">لا توجد رسائل بعد</p></div><div class="chat-input-area"><input type="text" id="chatInput" placeholder="اكتب رسالتك..." onkeyup="if(event.key==='Enter')sendMessage()"><button onclick="sendMessage()">➤</button></div></div>
+<div id="app"><div style="min-height:100vh;display:grid;place-items:center;color:#0097A7;font-family:Cairo,Arial;font-size:14px;font-weight:800">جاري التحقق من الجهاز...</div></div>
+<div id="modal" class="modal"><div class="modal-box" id="modalBox"></div></div>
+<div id="toast" class="toast"></div>
 
 <script>
-var firebaseConfig = {apiKey:"AIzaSyCuc_TvsiXiTQfBqTXHzXCdAIzI9VQA3Co",authDomain:"alooshclose.firebaseapp.com",projectId:"alooshclose",storageBucket:"alooshclose.firebasestorage.app",messagingSenderId:"634133828611",appId:"1:634133828611:web:f683299083d0c799342a36"};
-firebase.initializeApp(firebaseConfig);
-var db = firebase.firestore();
+"use strict";
 
-var smeta = {رياضيات:{emoji:'🔢'},فيزياء:{emoji:'⚛️'},كيمياء:{emoji:'⚗️'},علوم:{emoji:'🧬'},عربي:{emoji:'📝'},فرنسي:{emoji:'🥐'},'تربية اسلامية':{emoji:'☪️'},إنجليزي:{emoji:'💂'}};
-var unitNames = {رياضيات:['النهايات','الاشتقاق','التكامل','المصفوفات','الهندسة','الإحصاء','المتتاليات'],فيزياء:['الميكانيك','الكهرباء','الأمواج','الضوء','الحديثة','الحرارة','النووية'],كيمياء:['الذرة','المحاليل','العضوية','الحرارية','التوازن','الكهربائية','النووية'],علوم:['الأحياء','الأرض','الوراثة','النبات','الحيوان','البيئة','التطور'],عربي:['النحو','البلاغة','الأدب','النصوص','الإملاء','التعبير','المراجعة'],فرنسي:['Grammaire','Vocabulaire','Compréhension','Production','Littérature','Civilisation','Révision'],'تربية اسلامية':['العقيدة','السيرة','القرآن','التجويد','الفقه','الأخلاق','المراجعة'],إنجليزي:['Grammar','Vocabulary','Tenses','Reading','Writing','Speaking','Revision']};
-var lessonNames = {رياضيات:[['نهايات الدوال','الاتصال','النهايات المثلثية','النهايات اللانهائية','الاتصال عند نقطة','الفروع اللانهائية','تطبيقات النهايات'],['قواعد الاشتقاق','مشتقات الدوال','تطبيقات الاشتقاق','رسم المنحنيات','الدوال المركبة','القيمة المتوسطة','تطبيقات'],['التكامل المحدود','التكامل غير المحدود','المساحات','التكامل بالتجزيء','حجوم الدوران','التعويض','تطبيقات'],['عمليات المصفوفات','المحددات','معكوس المصفوفة','جمل المعادلات','القيم الذاتية','جمع وطرح','ضرب المصفوفات'],['المساحات','الحجوم','الإحداثيات','المستقيمات','المستويات','المسافات','الزوايا'],['النزعة المركزية','الارتباط','الاحتمالات','التوزيعات','الانحراف','الوسيط','التمثيل البياني'],['الحسابية','الهندسية','المتسلسلات','النهايات','الاستقراء','التقارب','المجموع']],فيزياء:[['الحركة','القوى','الطاقة','نيوتن','الدائرية','الحركية','التصادمات'],['الساكنة','الدارات','القوانين','أوم','المكثفات','المقاومات','القدرة'],['المغناطيسية','الحث','الكهرمغناطيسية','الخصائص','الرنين','الصوتية','التداخل'],['الانعكاس','الانكسار','العدسات','الحرارة','الديناميكا','المرايا','التمدد'],['النسبية','الذرية','النووية','التكافؤ','النموذج','التحلل','الجسيمات'],['الحرارة','الديناميكا','الانتقال','التمدد','النوعية','الكمية','المحركات'],['الانشطار','الاندماج','الإشعاع','المفاعلات','النظائر','الطاقة','التطبيقات']],كيمياء:[['بنية الذرة','الجدول الدوري','الروابط','الأعداد الكوانتية','التوزيع','الأيونية','التساهمية'],['المحاليل','التراكيز','التميع','الحموض','pH','المعايرة','الأملاح'],['الهيدروكربونات','الكحولات','البوليمرات','الألكانات','الحموض','الإسترات','البترول'],['الديناميكا','الأنتلبيا','حرارة التفاعل','القانون الأول','الإنتروبيا','الطاقة الحرة','التفاعلات'],['التوازن','ثابت التوازن','لوشاتلييه','العكوسة','الحساب','الضغط','الأيوني'],['التحليل','الخلايا','الأقطاب','الجهد','التيار','البطاريات','التطبيقات'],['الانشطار','الاندماج','النظائر','الإشعاع','عمر النصف','الطاقة','التطبيقات']],علوم:[['الخلية','التغذية','العصبي','الهرمونات','المناعة','الدم','التنفس'],['طبقات الأرض','الدورة المائية','التلوث','الموارد','الزلازل','المناخ','النظام البيئي'],['الجينات','الانقسام','DNA','الطفرات','مندل','الهندسة','الأمراض'],['البذور','الجذور','الأوراق','الأزهار','الثمار','التمثيل','النمو'],['الثدييات','الطيور','الأسماك','الزواحف','الحشرات','البرمائيات','التطور'],['النظام','التوازن','السلاسل','الأهرام','الدورات','التنوع','الحماية'],['الأدلة','النشوء','الانتخاب','التكيف','التحور','الأنواع','الأحافير']],عربي:[['القواعد','الإعراب','الجملة الفعلية','الجملة الاسمية','النواسخ','المرفوعات','المنصوبات'],['البيان','البديع','المعاني','الاستعارة','الكناية','المحسنات','الأساليب'],['الجاهلي','الإسلامي','العباسي','الحديث','الأعلام','الأجناس','التحليل'],['النثر','الشعر العمودي','الشعر الحر','النقدية','القصة','المسرح','المقالة'],['الهمزات','التاء','الألف','الياء','الواو','النون','التنوين'],['المقدمة','العرض','الخاتمة','الوصف','السرد','الحوار','الإقناع'],['النحو','البلاغة','الأدب','النصوص','الإملاء','التعبير','الشامل']],فرنسي:[['Le nom','Les articles','Les pronoms','Les prépositions','La négation','Interrogation','Conjonctions'],['Quotidien','Scolaire','Synonymes','Formation','Idiomatiques','Thématique','Enrichissement'],['Écrite','Orale','Analyse','Stratégies','Repérage','Types','Globale'],['Écrite','Orale','Rédaction','Résumé','Lettre','Dialogue','Description'],['Poésie','Roman','Théâtre','Figures','Analyse','Auteurs','Mouvements'],['France','Géographie','Histoire','Fêtes','Francophonie','Arts','Gastronomie'],['Grammaire','Vocabulaire','Examens','Test','Simulation','Astuces','Finale']],'تربية اسلامية':[['أركان الإيمان','التوحيد','الملائكة','الكتب','الرسل','القدر','الأسماء'],['المولد','البعثة','الهجرة','الغزوات','الفتح','الخلفاء','الصفات'],['النزول','الأسباب','المكي','المدني','الجمع','الفضائل','القصص'],['النون','الميم','المدود','الراء','الصفات','المخارج','الوقف'],['الطهارة','الصلاة','الزكاة','الصيام','الحج','المعاملات','الأسرة'],['مكارم الأخلاق','الصدق','البر','حسن الخلق','الاجتماعية','الحوار','الاحترام'],['العقيدة','السيرة','القرآن','التجويد','الفقه','الأخلاق','الشامل']],إنجليزي:[['Parts of Speech','Sentence Structure','Punctuation','Agreement','Articles','Prepositions','Review'],['Word Formation','Synonyms','Idioms','Academic','Collocations','Prefixes','Building'],['Present Simple','Past Simple','Future Forms','Present Perfect','Past Perfect','Passive Voice','Review'],['Comprehension','Skimming','Analysis','Strategies','Inference','Main Idea','Practice'],['Paragraph','Essay','Letter','Formal','Descriptive','Argumentative','Practice'],['Listening','Note-taking','Fluency','Pronunciation','Conversation','Presentation','Practice'],['Grammar','Vocabulary','Reading','Writing','Listening','Papers','Final']]};
+/* =========================================================
+   Firebase Config — من لوحة Firebase
+   ========================================================= */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCuc_TvsiXiTQfBqTXHzXCdAIzI9VQA3Co",
+  authDomain: "alooshclose.firebaseapp.com",
+  projectId: "alooshclose",
+  storageBucket: "alooshclose.firebasestorage.app",
+  messagingSenderId: "634133828611",
+  appId: "1:634133828611:web:f683299083d0c799342a36"
+};
 
-var Q=[],cq=0,sc=0,wr=[],tq=0,so=[],cai=-1,an=false,rs=40,lb=['أ','ب','ج','د'];
-var selSubject='',selTime=40,selMode='random',selUnitIdx=-1,selQCount='all',chkLessons=[],secretCount=0,adminTab='manual';
-var chatOpen=false,lastMessageCount=0,chatListener=null,bannedWords=[],bannedUsers=[];
-var currentChallengeId=null,challengeSubject='',challengeQuestions=[];
-var navHistory = ['home']; // للرجوع خطوة بخطوة
+/* ★ حالة الاتصال بـ Firebase ★ */
+const cloud = {
+  ok: false,
+  checking: true,
+  db: null,
+  banUnsubscribe: null,
+  lastError: ""
+};
 
-// ==================== نظام الرجوع خطوة بخطوة ====================
-function navigateTo(page){
-    navHistory.push(page);
-    showPage(page);
-}
-
-function goBack(){
-    if(navHistory.length > 1){
-        navHistory.pop();
-        var prev = navHistory[navHistory.length-1];
-        showPage(prev);
-    } else {
-        showPage('home');
+/* =========================================================
+   Firebase helpers
+   ========================================================= */
+async function initFirebase(){
+  try{
+    if(typeof firebase === "undefined"){
+      cloud.lastError = "SDK not loaded";
+      cloud.ok = false;
+      return false;
     }
-    // إغلاق أي نوافذ مفتوحة
-    closeDialog();
-    document.getElementById('sidebar').classList.remove('show');
-    document.getElementById('sidebarOverlay').classList.remove('show');
-    document.getElementById('challengeOverlay').style.display = 'none';
+    if(!firebase.apps || !firebase.apps.length){
+      firebase.initializeApp(FIREBASE_CONFIG);
+    }
+    cloud.db = firebase.firestore();
+    // Try to enable persistence so offline works
+    try{
+      await cloud.db.enablePersistence({synchronizeTabs:true});
+    }catch(e){ /* Multi-tab or unsupported — ignore */ }
+    // Quick health check
+    await cloud.db.collection("_health").doc("ping").get();
+    cloud.ok = true;
+    cloud.checking = false;
+    return true;
+  }catch(e){
+    cloud.lastError = String(e && e.message || e);
+    cloud.ok = false;
+    cloud.checking = false;
+    console.warn("Firebase init failed:", e);
+    return false;
+  }
 }
 
-// الاستماع لزر الرجوع في الهاتف
-window.addEventListener('popstate', function(e){
-    goBack();
+async function firestoreCheckBan(deviceId){
+  if(!cloud.ok || !cloud.db) return null;
+  try{
+    const doc = await cloud.db.collection("bans").doc(deviceId).get();
+    return doc.exists ? (doc.data()||{}) : null;
+  }catch(e){
+    console.warn("check ban failed:", e);
+    return null;
+  }
+}
+
+async function firestoreSetBan(deviceId, data){
+  if(!cloud.ok || !cloud.db) return false;
+  try{
+    await cloud.db.collection("bans").doc(deviceId).set(Object.assign({
+      deviceId: deviceId,
+      bannedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      bannedAtMs: Date.now()
+    }, data || {}));
+    return true;
+  }catch(e){
+    console.warn("set ban failed:", e);
+    return false;
+  }
+}
+
+async function firestoreRemoveBan(deviceId){
+  if(!cloud.ok || !cloud.db) return false;
+  try{
+    await cloud.db.collection("bans").doc(deviceId).delete();
+    return true;
+  }catch(e){
+    console.warn("remove ban failed:", e);
+    return false;
+  }
+}
+
+function firestoreWatchBan(deviceId, callback){
+  if(!cloud.ok || !cloud.db) return null;
+  try{
+    const unsub = cloud.db.collection("bans").doc(deviceId).onSnapshot(
+      (doc)=>{
+        if(doc.exists){
+          callback(true, doc.data()||{});
+        } else {
+          callback(false, null);
+        }
+      },
+      (err)=>{ console.warn("ban watch error:", err); }
+    );
+    return unsub;
+  }catch(e){
+    console.warn("watch failed:", e);
+    return null;
+  }
+}
+
+/* Fetch all bans (for admin view) */
+async function firestoreFetchBans(){
+  if(!cloud.ok || !cloud.db) return null;
+  try{
+    const snap = await cloud.db.collection("bans").get();
+    const arr = [];
+    snap.forEach(d=>arr.push(Object.assign({ deviceId:d.id }, d.data())));
+    return arr;
+  }catch(e){ return null; }
+}
+
+/* Users sync */
+async function firestoreSyncUser(deviceId, data){
+  if(!cloud.ok || !cloud.db) return false;
+  try{
+    await cloud.db.collection("users").doc(deviceId).set(Object.assign({
+      deviceId: deviceId,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, data||{}), { merge: true });
+    return true;
+  }catch(e){ return false; }
+}
+
+async function firestoreFetchUsers(){
+  if(!cloud.ok || !cloud.db) return null;
+  try{
+    const snap = await cloud.db.collection("users").get();
+    const arr = [];
+    snap.forEach(d=>arr.push(Object.assign({ deviceId:d.id }, d.data())));
+    return arr;
+  }catch(e){ return null; }
+}
+
+/* Results sync */
+async function firestorePushResult(result){
+  if(!cloud.ok || !cloud.db) return false;
+  try{
+    await cloud.db.collection("results").doc(result.id).set(Object.assign({
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, result));
+    return true;
+  }catch(e){ return false; }
+}
+
+async function firestoreFetchResults(){
+  if(!cloud.ok || !cloud.db) return null;
+  try{
+    const snap = await cloud.db.collection("results").orderBy("createdAt","desc").limit(500).get();
+    const arr = [];
+    snap.forEach(d=>arr.push(d.data()));
+    return arr;
+  }catch(e){ return null; }
+}
+
+/* =========================================================
+   Local multi-layer storage (unchanged)
+   ========================================================= */
+const KEY = "aloosh_edu_v9";
+const DEVICE_KEY = "aloosh_device_id_v9";
+const DEVICE_INFO_KEY = "aloosh_device_info_v9";
+const BAN_KEY = "aloosh_ban_v9";
+
+let _idb = null;
+function openIDB(){
+  return new Promise((res)=>{
+    if(_idb) return res(_idb);
+    try{
+      const req = indexedDB.open("aloosh_vault", 1);
+      req.onupgradeneeded = ()=>{ try{ req.result.createObjectStore("kv"); }catch(e){} };
+      req.onsuccess = ()=>{ _idb=req.result; res(_idb); };
+      req.onerror = ()=>res(null);
+      setTimeout(()=>res(_idb), 1500);
+    }catch(e){ res(null); }
+  });
+}
+function idbSet(k,v){
+  return new Promise((res)=>{
+    openIDB().then(db=>{
+      if(!db) return res(false);
+      try{
+        const tx=db.transaction("kv","readwrite");
+        tx.objectStore("kv").put(v, k);
+        tx.oncomplete=()=>res(true); tx.onerror=()=>res(false);
+      }catch(e){ res(false); }
+    });
+  });
+}
+function idbGet(k){
+  return new Promise((res)=>{
+    openIDB().then(db=>{
+      if(!db) return res(null);
+      try{
+        const tx=db.transaction("kv","readonly");
+        const r=tx.objectStore("kv").get(k);
+        r.onsuccess=()=>res(r.result==null?null:r.result);
+        r.onerror=()=>res(null);
+      }catch(e){ res(null); }
+    });
+  });
+}
+function setCookie(k, v, days){
+  try{
+    const d = new Date();
+    d.setTime(d.getTime() + (days||3650)*24*60*60*1000);
+    document.cookie = k + "=" + encodeURIComponent(v) + "; expires=" + d.toUTCString() + "; path=/; SameSite=Lax";
+  }catch(e){}
+}
+function getCookie(k){
+  try{
+    const m = document.cookie.match(new RegExp("(?:^|; )" + k.replace(/([.*+?^${}()|[\]\\])/g,"\\$1") + "=([^;]*)"));
+    return m ? decodeURIComponent(m[1]) : null;
+  }catch(e){ return null; }
+}
+const WN_TAG = "__ALOOSH__";
+function wnSet(k, v){
+  try{
+    let name = window.name || "";
+    const old = name.indexOf(WN_TAG);
+    if(old >= 0) name = name.substring(0, old);
+    const seg = name.indexOf("###");
+    let existing = {};
+    if(seg >= 0){
+      try{ existing = JSON.parse(name.substring(seg+3)); }catch(e){ existing = {}; }
+      name = name.substring(0, seg);
+    }
+    existing[k] = v;
+    window.name = name + "###" + JSON.stringify(existing) + WN_TAG;
+  }catch(e){}
+}
+function wnGet(k){
+  try{
+    const name = window.name || "";
+    const seg = name.indexOf("###");
+    if(seg < 0) return null;
+    const json = name.substring(seg+3).replace(WN_TAG, "");
+    const obj = JSON.parse(json);
+    return obj && obj[k] != null ? obj[k] : null;
+  }catch(e){ return null; }
+}
+async function vaultSet(key, value){
+  const v = String(value);
+  try{ localStorage.setItem(key, v); }catch(e){}
+  try{ sessionStorage.setItem(key, v); }catch(e){}
+  setCookie(key, v, 3650);
+  wnSet(key, v);
+  await idbSet(key, v);
+}
+async function vaultGet(key){
+  try{ const v=localStorage.getItem(key); if(v!=null) return v; }catch(e){}
+  const c = getCookie(key); if(c != null) return c;
+  const idb = await idbGet(key); if(idb != null) return String(idb);
+  try{ const v=sessionStorage.getItem(key); if(v!=null) return v; }catch(e){}
+  const w = wnGet(key); if(w != null) return String(w);
+  return null;
+}
+
+/* ===== Device fingerprint ===== */
+let DEVICE_ID = "";
+let DEVICE_INFO = { model:"", platform:"", platformVersion:"", browser:"", screen:"", cores:0, memory:0, timezone:"", lang:"", colorDepth:0, touch:0, gpu:"" };
+
+function detectPlatformFromUA(ua){
+  if(/Android/i.test(ua)) return "Android";
+  if(/iPhone|iPad|iPod/i.test(ua)) return "iOS";
+  if(/Windows/i.test(ua)) return "Windows";
+  if(/Macintosh|Mac OS/i.test(ua)) return "macOS";
+  if(/Linux/i.test(ua)) return "Linux";
+  return "Device";
+}
+function detectBrowserFromUA(ua){
+  if(/Edg\//i.test(ua)) return "Edge";
+  if(/OPR\/|Opera/i.test(ua)) return "Opera";
+  if(/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) return "Chrome";
+  if(/Safari\//i.test(ua) && !/Chrome/i.test(ua)) return "Safari";
+  if(/Firefox\//i.test(ua)) return "Firefox";
+  return "Browser";
+}
+function extractModelFromUA(ua, platform){
+  const m = ua.match(/\(([^)]+)\)/);
+  if(!m) return "";
+  const parts = m[1].split(";").map(x=>x.trim());
+  const known = parts.find(p=>/^(SM-|GT-|Redmi|Mi |POCO|M[0-9]|HUAWEI|HONOR|OPPO|CPH|vivo|V[0-9]|Infinix|Tecno|Nokia|Pixel|LM-|ANE-|MAR-|iPhone|iPad|OnePlus|Realme|RMX)/i.test(p));
+  if(known) return known.replace(/\s*Build\/.*/i,"").trim();
+  const withBuild = parts.find(p=>/Build\//i.test(p));
+  if(withBuild) return withBuild.split("Build/")[0].trim();
+  if(platform==="iOS"){
+    const ip = parts.find(p=>/iPhone|iPad|iPod/i.test(p));
+    if(ip) return ip.split(/\sOS\s/i)[0].trim();
+  }
+  if(platform==="Windows") return "Windows PC";
+  return "";
+}
+function getGPURenderer(){
+  try{
+    const c = document.createElement("canvas");
+    const gl = c.getContext("webgl") || c.getContext("experimental-webgl");
+    if(!gl) return "";
+    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    if(!dbg) return "";
+    return String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || "").slice(0,60);
+  }catch(e){ return ""; }
+}
+async function buildDeviceId(){
+  let model="", platform="", platformVersion="", browser="";
+  const ua = navigator.userAgent || "";
+  try{
+    if(navigator.userAgentData){
+      platform = navigator.userAgentData.platform || "";
+      if(navigator.userAgentData.getHighEntropyValues){
+        const d = await navigator.userAgentData.getHighEntropyValues(["model","platform","platformVersion","fullVersionList"]);
+        if(d.model) model = d.model;
+        if(d.platform) platform = d.platform;
+        if(d.platformVersion) platformVersion = d.platformVersion;
+        if(Array.isArray(d.fullVersionList) && d.fullVersionList.length){
+          const b = d.fullVersionList.find(x=>/Chrome|Edge|Opera|Samsung|Firefox/i.test(x.brand));
+          if(b) browser = b.brand;
+        }
+      }
+    }
+  }catch(e){}
+  if(!platform) platform = detectPlatformFromUA(ua);
+  if(!browser) browser = detectBrowserFromUA(ua);
+  if(!model) model = extractModelFromUA(ua, platform);
+  const screenStr = (window.screen && window.screen.width ? window.screen.width : 0) + "x" + (window.screen && window.screen.height ? window.screen.height : 0);
+  const ratio = window.devicePixelRatio || 1;
+  const cores = navigator.hardwareConcurrency || 0;
+  const memory = navigator.deviceMemory || 0;
+  const colorDepth = (window.screen && window.screen.colorDepth) || 0;
+  const touch = navigator.maxTouchPoints || 0;
+  let tz = "";
+  try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){}
+  const lang = navigator.language || "";
+  const gpu = getGPURenderer();
+  DEVICE_INFO = { model: model||"جهاز", platform:platform||"", platformVersion:platformVersion||"", browser:browser||"", screen:screenStr, ratio, cores, memory, timezone:tz, lang, colorDepth, touch, gpu };
+  const cachedId = await vaultGet(DEVICE_KEY);
+  if(cachedId && (cachedId.startsWith("AND-")||cachedId.startsWith("IOS-")||cachedId.startsWith("WIN-")||cachedId.startsWith("MAC-")||cachedId.startsWith("LNX-")||cachedId.startsWith("DEV-"))){
+    DEVICE_ID = cachedId;
+    const ci = await vaultGet(DEVICE_INFO_KEY);
+    if(ci){ try{ const p=JSON.parse(ci); DEVICE_INFO = Object.assign(DEVICE_INFO, p); }catch(e){} }
+    await vaultSet(DEVICE_KEY, DEVICE_ID);
+    await vaultSet(DEVICE_INFO_KEY, JSON.stringify(DEVICE_INFO));
+    return;
+  }
+  const fingerprintParts = [model, platform, platformVersion, screenStr, ratio, cores, memory, tz, lang, colorDepth, touch, gpu].join("|");
+  let h1 = 0, h2 = 5381;
+  for(let i=0;i<fingerprintParts.length;i++){
+    const c = fingerprintParts.charCodeAt(i);
+    h1 = ((h1<<5) - h1) + c; h1 = h1 | 0;
+    h2 = ((h2<<5) + h2) + c; h2 = h2 | 0;
+  }
+  const hash1 = (Math.abs(h1)>>>0).toString(16).toUpperCase().padStart(8,"0");
+  const hash2 = (Math.abs(h2)>>>0).toString(16).toUpperCase().padStart(8,"0");
+  const combined = (hash1 + hash2).slice(0,10);
+  const platCode = ({"Android":"AND","iOS":"IOS","Windows":"WIN","macOS":"MAC","Linux":"LNX"})[platform] || "DEV";
+  const safeModel = (model||"DEVICE").replace(/[^A-Za-z0-9]/g,"").toUpperCase().slice(0,10) || "DEVICE";
+  DEVICE_ID = platCode + "-" + safeModel + "-" + combined;
+  await vaultSet(DEVICE_KEY, DEVICE_ID);
+  await vaultSet(DEVICE_INFO_KEY, JSON.stringify(DEVICE_INFO));
+}
+
+/* ===== Ban status ===== */
+let _isBanned = false;
+let _banReason = "";
+
+async function checkLocalBan(){
+  const banData = await vaultGet(BAN_KEY);
+  if(!banData) return false;
+  try{
+    const obj = JSON.parse(banData);
+    if(obj && obj[DEVICE_ID]){
+      _banReason = (obj[DEVICE_ID] && obj[DEVICE_ID].reason) || "";
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+async function applyLocalBan(deviceId, reason){
+  const banData = await vaultGet(BAN_KEY) || "{}";
+  let obj = {};
+  try{ obj = JSON.parse(banData); }catch(e){ obj = {}; }
+  obj[deviceId] = { ts: Date.now(), reason: reason||"" };
+  await vaultSet(BAN_KEY, JSON.stringify(obj));
+}
+async function removeLocalBan(deviceId){
+  const banData = await vaultGet(BAN_KEY);
+  if(!banData) return;
+  let obj = {};
+  try{ obj = JSON.parse(banData); }catch(e){ return; }
+  delete obj[deviceId];
+  await vaultSet(BAN_KEY, JSON.stringify(obj));
+}
+
+/* =========================================================
+   Icons
+   ========================================================= */
+const I={
+home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+grid:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
+user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+arrowL:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>',
+arrowR:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>',
+check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l3-3 3 3 5-6"/></svg>',
+save:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
+logout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+download:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
+upload:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+edit:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>',
+trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>',
+info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>',
+target:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>',
+refresh:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>',
+star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 2 3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>',
+layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
+cap:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
+shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+award:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="m8.21 13.89-1.21 7.11 5-3 5 3-1.21-7.12"/></svg>',
+bookOpen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+smartphone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M12 18h.01"/></svg>',
+cpu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>',
+crown:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 18h14l1-11-5 4-3-5-3 5-5-4z"/></svg>',
+ban:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>',
+unlock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>',
+code:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+paint:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>',
+copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>'
+};
+
+const AVATARS=["🧑‍🎓","👨‍🎓","👩‍🎓","🦁","🐯","🐼","🦊","🐨","🐸","🦉","🐺","🦅","🌟","⚡","🚀","🎯","🏆","💎","🔥","🌈","🧠","📚","🎓","👑"];
+const SUBJECT_ICONS=["🧬","📐","⚛️","🧪","📚","🔤","🎨","🎵","🌍","🏛️","💻","🧮","🔬","🧠","💡","📖","✏️","🗺️","⚗️","🧫","🦴","🌱","🐾","🔭","🎭","⚽","💼","🛠️","📊","🎯","🏥","⚖️","🕌","🕋","📿","🌙","🖋️","🎼","🎬","🖼️"];
+
+/* ===== Default DB ===== */
+const defaultDB = {
+  settings:{ appName:"منصة علوش التعليمية", adminPassword:"1234", timerDefault:60 },
+  user:{ name:"", avatar:"🧑‍🎓", points:0, quizzesTaken:0, correctTotal:0, totalQuestions:0, deviceId:"", joinedAt:"" },
+  subjects:[
+    {id:"s1", name:"علم الأحياء", icon:"🧬", desc:"الجهاز العصبي وأجهزة الجسم", units:[
+      {id:"u1", name:"الوحدة الأولى", lessons:[
+        {id:"l1", name:"الجهاز العصبي", desc:"مقدمة ومكونات الجهاز العصبي", questions:[
+          {q:"يتكون الجهاز العصبي المركزي من:", a:["المخ والنخاع","الدماغ والبصلة السيسائية","النخاع الشوكي والمخ","الدماغ والنخاع الشوكي"], correct:3, exp:"الجهاز العصبي المركزي يتكون من الدماغ والنخاع الشوكي."},
+          {q:"يتكون الجهاز العصبي المحيطي من:", a:["أعصاب وألياف عصبية","أعصاب وعقد عصبية","أعصاب فقط","عقد عصبية فقط"], correct:1, exp:"يتكون من الأعصاب والعقد العصبية."},
+          {q:"يستدق النخاع الشوكي في نهايته السفلية مشكلاً:", a:["المخروط النخاعي","ذيل الفرس","البصلة السيسائية","المادة البيضاء"], correct:0, exp:"يستدق النخاع الشوكي مشكلاً المخروط النخاعي."}
+        ]}
+      ]}
+    ]},
+    {id:"s2", name:"الرياضيات", icon:"📐", desc:"أساسيات ومهارات رياضية", units:[
+      {id:"u2", name:"الوحدة الأولى", lessons:[
+        {id:"l2", name:"المعادلات", desc:"مراجعة المعادلات الأساسية", questions:[
+          {q:"إذا كان 2س + 4 = 10 فإن س تساوي:", a:["2","3","4","5"], correct:1, exp:"2س = 6 ← س = 3."},
+          {q:"ناتج 5 × 6 هو:", a:["11","20","30","35"], correct:2, exp:"5 × 6 = 30."}
+        ]}
+      ]}
+    ]},
+    {id:"s3", name:"الفيزياء", icon:"⚛️", desc:"قوانين ومفاهيم الفيزياء", units:[
+      {id:"u3", name:"الوحدة الأولى", lessons:[
+        {id:"l3", name:"الحركة", desc:"السرعة والتسارع", questions:[
+          {q:"وحدة قياس السرعة في النظام الدولي:", a:["m","m/s","N","J"], correct:1, exp:"السرعة = المسافة/الزمن وحدتها m/s."}
+        ]}
+      ]}
+    ]},
+    {id:"s4", name:"الكيمياء", icon:"🧪", desc:"العناصر والتفاعلات", units:[]},
+    {id:"s5", name:"اللغة العربية", icon:"📚", desc:"النحو والصرف والبلاغة", units:[]},
+    {id:"s6", name:"اللغة الإنجليزية", icon:"🔤", desc:"Grammar & Vocabulary", units:[]}
+  ],
+  results:[], logs:[], users:[], bannedDevices:[]
+};
+
+function cloneDB(o){return JSON.parse(JSON.stringify(o))}
+function loadDB(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){var x=JSON.parse(raw); if(x && x.subjects){
+      if(!x.user) x.user=cloneDB(defaultDB.user);
+      if(!x.users) x.users=[];
+      if(!x.bannedDevices) x.bannedDevices=[];
+      return x;
+    }}
+  }catch(e){}
+  return cloneDB(defaultDB);
+}
+let db=loadDB();
+let state={ view:"home", subjectId:null, lessonId:null, quiz:null, admin:false, adminPanel:"dashboard", search:"", cloudBans:[] };
+let navStack=[];
+let _skipQuizConfirm=false;
+
+function saveDB(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast("تعذر الحفظ")}}
+function uid(p){return p+"_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7)}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),2200)}
+function subject(id){return db.subjects.find(x=>x.id===id)}
+function lessonBy(id){for(const s of db.subjects)for(const u of s.units)for(const l of u.lessons)if(l.id===id)return l}
+function findLessonSubject(id){for(const s of db.subjects)for(const u of s.units)for(const l of u.lessons)if(l.id===id)return{s,u,l};return null}
+function totalQuestions(){let n=0;db.subjects.forEach(s=>s.units.forEach(u=>u.lessons.forEach(l=>n+=l.questions.length)));return n}
+function totalLessons(){let n=0;db.subjects.forEach(s=>s.units.forEach(u=>n+=u.lessons.length));return n}
+function totalUnits(){let n=0;db.subjects.forEach(s=>n+=s.units.length);return n}
+function formatTime(s){s=Math.max(0,s);return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function fmtDate(d){try{return new Date(d).toLocaleDateString("ar-EG",{day:"numeric",month:"short",year:"numeric"})}catch(e){return d}}
+function renderAvatar(u){u=u||db.user||{};if(u.avatar && String(u.avatar).startsWith("data:")) return '<img src="'+u.avatar+'" alt="">';return '<span>'+esc(u.avatar||"🧑‍🎓")+'</span>'}
+function needsLogin(){return !db.user || !db.user.name || !db.user.name.trim()}
+function isBanned(deviceId){
+  deviceId = deviceId || DEVICE_ID;
+  if((db.bannedDevices||[]).indexOf(deviceId) !== -1) return true;
+  if((state.cloudBans||[]).some(b=>b.deviceId===deviceId)) return true;
+  if(deviceId === DEVICE_ID && _isBanned) return true;
+  return false;
+}
+function isCurrentUserBanned(){return isBanned(DEVICE_ID)}
+function cloudBadge(){
+  if(cloud.checking) return '<span class="cloud-badge checking">'+I.cloud+' جاري الاتصال...</span>';
+  if(cloud.ok) return '<span class="cloud-badge on">'+I.cloud+' متصل بالسحابة</span>';
+  return '<span class="cloud-badge off">'+I.cloud+' غير متصل (محلي)</span>';
+}
+
+/* ===== Nav ===== */
+function nav(view){
+  if(state.view!==view){
+    navStack.push({ view:state.view, subjectId:state.subjectId, adminPanel:state.adminPanel });
+    try{ history.pushState({ depth:navStack.length }, ""); }catch(e){}
+  }
+  state.view=view;render();
+}
+window.addEventListener("popstate", function(){
+  if(state.view==="login"||state.view==="banned") return;
+  if(navStack.length===0) return;
+  const prev=navStack[navStack.length-1];
+  if(state.view==="quiz" && !_skipQuizConfirm){
+    if(!confirm("سيتم إلغاء الاختبار. متأكد؟")){
+      try{ history.pushState({ depth:navStack.length }, ""); }catch(e){}
+      return;
+    }
+    state.quiz=null;clearInterval(quizTimer);
+  }
+  _skipQuizConfirm=false;
+  navStack.pop();
+  state.view=prev.view;
+  if(prev.subjectId!==undefined) state.subjectId=prev.subjectId;
+  if(prev.adminPanel!==undefined) state.adminPanel=prev.adminPanel;
+  render();
 });
 
-function showPage(page){
-    document.getElementById('homePage').style.display = page==='home'?'flex':'none';
-    document.getElementById('unitsPage').style.display = page==='units'?'flex':'none';
-    document.getElementById('quizPage').style.display = page==='quiz'?'flex':'none';
+/* ===== Shell ===== */
+function shell(content, activeTab){
+  activeTab = activeTab || state.view;
+  return `<div class="app">
+<header class="topbar">
+  <div class="brand"><div class="logo">${I.cap}</div>
+    <div class="brand-text"><b>${esc(db.settings.appName)}</b><small>تعلّم • اختبر • تصدّر</small></div>
+  </div>
+  <div class="top-actions">
+    <button class="icon-btn" onclick="openSearch()" title="بحث">${I.search}</button>
+    ${state.admin?`<button class="icon-btn" onclick="logoutAdmin()" title="خروج">${I.logout}</button>`:`<button class="icon-btn" onclick="openAdminLogin()" title="الإدارة">${I.settings}</button>`}
+    <button class="avatar-btn" onclick="nav('profile')" title="حسابي">${renderAvatar(db.user)}</button>
+  </div>
+</header>
+<main class="container">${content}</main>
+<nav class="bottom-nav">
+  <button class="${activeTab==='home'?'active':''}" onclick="goHome()">${I.home}<span>الرئيسية</span></button>
+  <button class="${activeTab==='subjects'||activeTab==='subject'?'active':''}" onclick="showSubjects()">${I.grid}<span>المواد</span></button>
+  <button class="${activeTab==='leaderboard'?'active':''}" onclick="showLeaderboard()">${I.trophy}<span>الصدارة</span></button>
+  <button class="${activeTab==='results'?'active':''}" onclick="showResults()">${I.chart}<span>نتائجي</span></button>
+  ${state.admin?`<button class="${activeTab==='admin'?'active':''}" onclick="showAdmin()">${I.shield}<span>الإدارة</span></button>`:`<button class="${activeTab==='profile'?'active':''}" onclick="nav('profile')">${I.user}<span>حسابي</span></button>`}
+</nav></div>`;
 }
 
-// ==================== اسم الطالب ====================
-function saveName(){var n=document.getElementById('studentName').value.trim();if(!n)n='طالب';localStorage.setItem('student_name',n);if(!localStorage.getItem('student_uid'))localStorage.setItem('student_uid','u_'+Date.now());document.getElementById('namePrompt').style.display='none';if(window._pendingChallenge){joinChallengeRoom(window._pendingChallenge);window._pendingChallenge=null;}}
-if(localStorage.getItem('student_name'))document.getElementById('namePrompt').style.display='none';
+function render(){
+  const app=document.getElementById("app");
+  if(isCurrentUserBanned()){ state.view="banned"; app.innerHTML=renderBannedScreen(); return; }
+  if(needsLogin()){ state.view="login"; app.innerHTML=renderLoginScreen(); return; }
+  if(state.view==="quiz") return renderQuiz();
+  if(state.view==="quizResult") return renderQuizResult();
+  if(state.view==="admin") return renderAdmin();
+  if(state.view==="subjects") return app.innerHTML=shell(renderSubjects(),"subjects");
+  if(state.view==="subject") return app.innerHTML=shell(renderSubject(),"subjects");
+  if(state.view==="results") return app.innerHTML=shell(renderResults(),"results");
+  if(state.view==="leaderboard") return app.innerHTML=shell(renderLeaderboard(),"leaderboard");
+  if(state.view==="profile") return app.innerHTML=shell(renderProfile(),"profile");
+  app.innerHTML=shell(renderHome(),"home");
+}
 
-// ==================== لوحة المتصدرين ====================
-function openSidebar(){document.getElementById('sidebar').classList.add('show');document.getElementById('sidebarOverlay').classList.add('show');loadLeaderboard();}
-function closeSidebar(){document.getElementById('sidebar').classList.remove('show');document.getElementById('sidebarOverlay').classList.remove('show');}
-async function loadLeaderboard(){var l=document.getElementById('leaderboardList');l.innerHTML='<p class="lb-empty">⏳ تحميل...</p>';try{var s=await db.collection('contest_scores').orderBy('score','desc').limit(50).get();if(s.empty){l.innerHTML='<p class="lb-empty">😴 لا توجد نتائج</p>';return;}var p={};s.forEach(function(d){var x=d.data();if(!p[x.userId])p[x.userId]={name:x.userName||'طالب',score:0,tests:0};p[x.userId].score+=x.score||0;p[x.userId].tests+=1;});var arr=[];for(var uid in p)arr.push(p[uid]);arr.sort(function(a,b){return b.score-a.score});var h='';for(var i=0;i<Math.min(arr.length,10);i++){var r=arr[i],rc='',medal='';if(i===0){rc='rank-1';medal='🥇';}else if(i===1){rc='rank-2';medal='🥈';}else if(i===2){rc='rank-3';medal='🥉';}h+='<div class="lb-item '+rc+'"><div class="lb-rank">'+(medal||('#'+(i+1)))+'</div><div class="lb-name">'+r.name+'<br><span style="font-size:8px;color:#999">'+r.tests+' اختبار</span></div><div class="lb-score">'+r.score+' نقطة</div></div>';}l.innerHTML=h;}catch(e){l.innerHTML='<p class="lb-empty">❌ خطأ</p>';}}
-async function saveScoreToLeaderboard(score,total){var name=localStorage.getItem('student_name')||'طالب';var uid=localStorage.getItem('student_uid')||('u_'+Date.now());localStorage.setItem('student_uid',uid);try{await db.collection('contest_scores').add({userId:uid,userName:name,score:score,total:total,subject:selSubject,date:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){}}
+/* ===== Banned screen ===== */
+function renderBannedScreen(){
+  return `<div class="login"><div class="login-box banned-box">
+    <div class="login-logo" style="background:linear-gradient(135deg,#e53935,#c62828)">${I.lock}</div>
+    <h2>🚫 هذا الجهاز محظور</h2>
+    <p>تم حظر جهازك نهائياً من استخدام المنصة. لا يمكنك الدخول حتى تغيّر جهازك.</p>
+    <div class="device-box" style="background:var(--red-l);border-color:rgba(229,57,53,.2);margin-top:14px">
+      <div class="lbl" style="color:var(--red)">${I.smartphone} معرّف الجهاز</div>
+      <div class="val" style="color:var(--red)">${esc(DEVICE_ID)}</div>
+      <div class="sub" style="color:var(--red)">${I.cpu} ${esc(DEVICE_INFO.model||"")} • ${esc(DEVICE_INFO.platform||"")}</div>
+    </div>
+    ${_banReason?`<div style="margin-top:12px;padding:10px;background:var(--surface-2);border-radius:12px;font-size:12px;font-weight:700;color:var(--text-2)">السبب: ${esc(_banReason)}</div>`:""}
+    <div style="margin-top:16px;padding:12px;background:var(--surface-2);border-radius:12px;font-size:11.5px;color:var(--muted);line-height:1.8;font-weight:600;text-align:right">
+      🔒 الحظر مسجّل على السحابة (Firebase) + 5 طبقات تخزين محلية. حذف بيانات التطبيق لن يرفعه.
+    </div>
+    ${cloudBadge()}
+  </div></div>`;
+}
 
-// ==================== الأخبار والأزرار والشات (موجودة بشكل مختصر) ====================
-async function loadNews(){try{var s=await db.collection('news').orderBy('createdAt','desc').limit(5).get();var nd=[];s.forEach(function(d){nd.push(d.data());});renderNews(nd);}catch(e){document.getElementById('newsContainer').innerHTML='';}}
-function renderNews(nd){var c=document.getElementById('newsContainer');if(nd.length===0){c.innerHTML='';return;}var t='';for(var i=0;i<nd.length;i++){t+='<span class="news-item">🆕 '+nd[i].text+' <span class="news-date">اليوم</span></span>';}t+=t;c.innerHTML='<div class="news-bar"><div class="news-scroll"><div class="news-track">'+t+'</div></div></div>';}
-async function loadLinks(){try{var s=await db.collection('links').orderBy('createdAt','asc').get();var ld=[];s.forEach(function(d){ld.push({id:d.id,...d.data()});});renderLinks(ld);}catch(e){document.getElementById('linksContainer').innerHTML='';}}
-function renderLinks(ld){var c=document.getElementById('linksContainer');if(ld.length===0){c.innerHTML='';return;}var h='<div class="links-section">';for(var i=0;i<ld.length;i++){h+='<a href="'+ld[i].url+'" target="_blank" class="link-btn '+(ld[i].color||'')+'">'+ld[i].title+'</a>';}h+='</div>';c.innerHTML=h;}
+/* ===== Login ===== */
+function renderLoginScreen(){
+  const model = DEVICE_INFO.model || "جاري التعرف...";
+  const plat = DEVICE_INFO.platform || "";
+  const pv = DEVICE_INFO.platformVersion ? " "+DEVICE_INFO.platformVersion : "";
+  const b = DEVICE_INFO.browser || "";
+  return `<div class="login"><div class="login-box">
+    <div class="login-logo">${I.cap}</div>
+    <h2>مرحباً بك 👋</h2>
+    <p>أدخل اسمك للبدء في رحلة التعلّم</p>
+    <div class="login-field">
+      <label>${I.user} اسمك</label>
+      <input id="loginName" type="text" placeholder="اكتب اسمك هنا..." maxlength="30" autocomplete="off">
+    </div>
+    <div class="device-box">
+      <div class="lbl">${I.smartphone} معرّف جهازك</div>
+      <div class="val">${esc(DEVICE_ID)}</div>
+      <div class="sub">${I.cpu} ${esc(model)}${plat?` • ${esc(plat)}${esc(pv)}`:''}${b?` • ${esc(b)}`:''}</div>
+    </div>
+    <button class="login-btn" onclick="doLogin()">${I.check} بدء التعلم</button>
+    <div style="margin-top:12px">${cloudBadge()}</div>
+    <div class="login-note">
+      🔒 معرّف جهازك مبني على بصمة عتاد هاتفك الفعلية. ثابت ولا يمكن تزويره من المستخدم.
+    </div>
+  </div></div>`;
+}
+async function doLogin(){
+  if(isCurrentUserBanned()){toast("هذا الجهاز محظور");render();return}
+  const name=document.getElementById("loginName").value.trim();
+  if(!name){toast("اكتب اسمك أولاً");return}
+  if(!db.user) db.user=cloneDB(defaultDB.user);
+  db.user.name=name;
+  db.user.deviceId=DEVICE_ID;
+  db.user.joinedAt=db.user.joinedAt||new Date().toISOString();
+  if(!db.users) db.users=[];
+  const existing=db.users.find(u=>u.deviceId===DEVICE_ID);
+  if(existing){
+    existing.name=name;
+    existing.lastSeen=new Date().toISOString();
+    existing.deviceInfo=DEVICE_INFO;
+  } else {
+    db.users.push({
+      id:uid("u"), name, deviceId:DEVICE_ID,
+      deviceInfo:DEVICE_INFO,
+      createdAt:new Date().toISOString(),
+      lastSeen:new Date().toISOString(),
+      points:db.user.points||0
+    });
+  }
+  saveDB();
+  // Sync to Firestore (async — don't block UI)
+  firestoreSyncUser(DEVICE_ID, {
+    name: name,
+    deviceInfo: DEVICE_INFO,
+    points: db.user.points||0,
+    quizzesTaken: db.user.quizzesTaken||0,
+    correctTotal: db.user.correctTotal||0,
+    joinedAt: db.user.joinedAt
+  });
+  nav("home");toast("أهلاً "+name+" 🎉");
+}
 
-// ==================== دوال المنصة ====================
-function secretClick(){secretCount++;if(secretCount>=5){secretCount=0;adminTab='manual';openAdminPanel();}setTimeout(function(){secretCount=0},2000);}
-function buildHome(){var cats=[{title:'🧮 العلوم والرياضيات',list:['رياضيات','فيزياء','كيمياء','علوم']},{title:'📚 اللغات والتربية',list:['عربي','فرنسي','تربية اسلامية','إنجليزي']}];var h='';for(var c=0;c<cats.length;c++){h+='<div class="section-title">'+cats[c].title+'</div><div class="grades">';for(var i=0;i<cats[c].list.length;i++){var s=cats[c].list[i];h+='<div class="grade" onclick="showUnits(\''+s+'\')"><div class="g-icon">'+smeta[s].emoji+'</div><div class="g-name">'+s+'</div></div>'}h+='</div>';}document.getElementById('subjectsGrid').innerHTML=h;}
+/* ===== Home ===== */
+function renderHome(){
+  const recent=db.results.slice(-3).reverse();
+  const rank=getUserRank();
+  return `
+<section class="hero">
+  <div class="hero-main">
+    <div class="eyebrow">${I.star} منصة تعليمية ذكية</div>
+    <h1>تعلّم بذكاء، <span class="hl">وتصدّر قائمة الأبطال.</span></h1>
+    <p>اختر مادتك، ابدأ الدرس، ثم اختبر نفسك في وضع التدريب أو الاختبار. اجمع النقاط واحتل المركز الأول.</p>
+    <div class="btn-row">
+      <button class="primary" onclick="showSubjects()">${I.play} ابدأ التعلم</button>
+      <button class="secondary" onclick="showLeaderboard()">${I.trophy} الصدارة</button>
+    </div>
+  </div>
+  <div class="hero-side">
+    <div class="stat-grid">
+      <div class="stat teal"><b>${db.subjects.length}</b><span>مادة</span></div>
+      <div class="stat green"><b>${totalLessons()}</b><span>درس</span></div>
+      <div class="stat gold"><b>${db.user.points||0}</b><span>نقطة</span></div>
+      <div class="stat"><b>#${rank}</b><span>ترتيبك</span></div>
+    </div>
+    <div class="notice">${I.info}<span>أهلاً <b>${esc(db.user.name)}</b>! جهازك: ${esc(DEVICE_INFO.model||"")}</span></div>
+  </div>
+</section>
+<div class="section-title"><h2>${I.bookOpen} المواد الدراسية</h2><span>${db.subjects.length} مواد</span></div>
+<div class="search">${I.search}<input id="homeSearch" placeholder="ابحث..." oninput="state.search=this.value;render()" value="${esc(state.search)}"></div>
+<div class="subject-grid">${subjectCards()}</div>
+${recent.length?`<div class="section-title"><h2>${I.clock} آخر الاختبارات</h2></div>
+<div class="card">${recent.map(r=>`
+  <div class="result-row">
+    <div class="lesson-info"><div class="lesson-icon">${I.check}</div>
+      <div><b>${esc(r.lessonName)}</b><small>${esc(r.subjectName)} • ${r.score}/${r.total} • ${fmtDate(r.date)}</small></div>
+    </div>
+    <span class="pct ${r.percent>=70?'good':r.percent<50?'bad':''}">${r.percent}%</span>
+  </div>`).join("")}</div>`:""}`;
+}
+function subjectCards(){
+  const q=state.search.trim().toLowerCase();
+  const list=db.subjects.filter(s=>!q||s.name.toLowerCase().includes(q));
+  if(!list.length)return `<div class="empty" style="grid-column:1/-1">${I.search}<div>لا توجد نتائج.</div></div>`;
+  return list.map(s=>{
+    const lessons=s.units.reduce((n,u)=>n+u.lessons.length,0);
+    const qs=s.units.reduce((n,u)=>n+u.lessons.reduce((m,l)=>m+l.questions.length,0),0);
+    return `<article class="subject" onclick="openSubject('${s.id}')">
+      <div class="emoji">${esc(s.icon)}</div><h3>${esc(s.name)}</h3>
+      <p>${esc(s.desc||"محتوى تعليمي")}</p>
+      <div class="progress"><i style="width:${lessons?Math.min(100,lessons*18):4}%"></i></div>
+      <div class="subject-meta"><span>${s.units.length} وحدة • ${lessons} درس • ${qs} سؤال</span><span>دخول ←</span></div>
+    </article>`;
+  }).join("");
+}
+function renderSubjects(){
+  return `<div class="section-title"><h2>${I.grid} كل المواد</h2></div>
+  <div class="search">${I.search}<input placeholder="ابحث..." oninput="state.search=this.value;render()" value="${esc(state.search)}"></div>
+  <div class="subject-grid">${subjectCards()}</div>`;
+}
+function renderSubject(){
+  const s=subject(state.subjectId);if(!s){goHome();return ""}
+  const units=s.units.map((u,i)=>`
+    <div class="unit">
+      <div class="unit-head">
+        <div class="unit-title"><div class="unit-num">${i+1}</div>
+          <div><b>${esc(u.name)}</b><small>${u.lessons.length} درس</small></div>
+        </div>
+        <span style="color:var(--muted)">${I.layers}</span>
+      </div>
+      <div class="lesson-list">
+        ${u.lessons.length?u.lessons.map(l=>`
+          <div class="lesson">
+            <div class="lesson-info"><div class="lesson-icon">${I.play}</div>
+              <div><b>${esc(l.name)}</b><small>${esc(l.desc||"درس")} • ${l.questions.length} سؤال</small></div>
+            </div>
+            <button class="primary" onclick="event.stopPropagation();openQuizSetup('${l.id}')">${I.play} ابدأ</button>
+          </div>`).join(""):`<div class="empty">لا توجد دروس.</div>`}
+      </div>
+    </div>`).join("");
+  return `<button class="back" onclick="showSubjects()">${I.arrowR}<span>رجوع</span></button>
+  <div class="breadcrumb">${I.book} ${esc(s.name)}</div>
+  <div class="section-title"><h2>${esc(s.icon)} ${esc(s.name)}</h2><span>${s.units.length} وحدة</span></div>
+  ${units||`<div class="empty">${I.book}<div>لا توجد وحدات.</div></div>`}`;
+}
 
-function showUnits(subject){
-    selSubject=subject;
-    var h='<div class="units-header"><button onclick="goBack()">←</button><span>'+smeta[subject].emoji+' '+subject+'</span></div><div class="units-body">';
-    for(var i=0;i<7;i++){
-        h+='<div class="unit-card"><div class="uc-header"><div class="uc-icon">'+(i+1)+'</div><div class="uc-name">الوحدة '+(i+1)+': '+unitNames[subject][i]+'</div><div class="uc-count">7 دروس</div></div>';
-        h+='<div class="uc-lessons">📖 '+lessonNames[subject][i].join(' • ')+'</div><div class="uc-actions">';
-        h+='<button class="unit-btn primary" onclick="quickStart('+i+')">▶️ بدء</button>';
-        h+='<button class="unit-btn outline" onclick="customStart('+i+')">⚙️ تخصيص</button></div></div>';
+/* ===== Quiz ===== */
+let quizTimer=null;
+function openQuizSetup(lessonId){
+  const l=lessonBy(lessonId);if(!l||!l.questions.length){toast("لا توجد أسئلة");return}
+  const wrongFromLast=getWrongIdsFromLast(lessonId);
+  showModal(`<div class="modal-head"><h2>اختر وضع الاختبار</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="notice" style="margin-bottom:12px">${I.info}<span>الدرس: <b>${esc(l.name)}</b> • ${l.questions.length} سؤال${wrongFromLast.length?` • ${wrongFromLast.length} خطأ سابق`:''}</span></div>
+  <div class="mode-grid">
+    <div class="mode-card" onclick="startQuiz('${lessonId}','practice')">
+      <div class="mi" style="background:linear-gradient(135deg,var(--green),#22c55e)">${I.book}</div>
+      <h4>وضع التدريب</h4><p>تصحيح فوري بعد كل سؤال.</p>
+    </div>
+    <div class="mode-card" onclick="startQuiz('${lessonId}','exam')">
+      <div class="mi">${I.target}</div><h4>وضع الاختبار</h4><p>التصحيح في النهاية فقط.</p>
+    </div>
+  </div>
+  ${wrongFromLast.length?`<button class="secondary" style="width:100%;margin-top:4px" onclick="startQuiz('${lessonId}','retry')">${I.refresh} إعادة الأخطاء (${wrongFromLast.length})</button>`:''}`);
+}
+function getWrongIdsFromLast(lessonId){
+  const last=[...db.results].reverse().find(r=>r.lessonId===lessonId);
+  if(!last||!last.wrongIdx||!last.wrongIdx.length)return[];
+  return last.wrongIdx;
+}
+function startQuiz(lessonId, mode){
+  if(isCurrentUserBanned()){toast("محظور");render();return}
+  const l=lessonBy(lessonId);if(!l||!l.questions.length){toast("لا توجد أسئلة");return}
+  closeModal();
+  let questions = l.questions.map((q,i)=>({...q, _origIndex:i}));
+  if(mode==="retry"){
+    const idxs=getWrongIdsFromLast(lessonId);
+    questions = idxs.map(i=>l.questions[i]?{...l.questions[i],_origIndex:i}:null).filter(Boolean);
+    if(!questions.length){toast("لا توجد أخطاء");return}
+  }
+  state.quiz={ lessonId, mode, index:0, questions,
+    answers:Array(questions.length).fill(null),
+    revealed:Array(questions.length).fill(false),
+    seconds: mode==="practice"? 999999 : (Number(db.settings.timerDefault)||60)*questions.length,
+    start:Date.now(), finished:false, result:null };
+  nav("quiz");
+  clearInterval(quizTimer);
+  if(mode!=="practice"){
+    quizTimer=setInterval(()=>{
+      if(!state.quiz || state.quiz.finished)return;
+      state.quiz.seconds--;
+      const el=document.getElementById("quizTimer");
+      if(el)el.innerHTML=I.clock+' '+formatTime(state.quiz.seconds);
+      if(state.quiz.seconds<=0){clearInterval(quizTimer);finishQuiz(true)}
+    },1000);
+  }
+}
+function renderQuiz(){
+  if(isCurrentUserBanned()){render();return}
+  const qs=state.quiz; if(!qs){goHome();return}
+  const lsInfo=findLessonSubject(qs.lessonId); if(!lsInfo){goHome();return}
+  const {s,l}=lsInfo;
+  const q=qs.questions[qs.index];
+  const selected=qs.answers[qs.index];
+  const revealed=qs.revealed[qs.index];
+  const isPractice=qs.mode==="practice";
+  const modeName=qs.mode==="practice"?"تدريب":qs.mode==="retry"?"إعادة خطأ":"اختبار";
+  const opts=q.a.map((a,i)=>{
+    let cls="option";
+    if(selected===i)cls+=" selected";
+    if(revealed){
+      if(i===q.correct)cls="option correct";
+      else if(selected===i && i!==q.correct)cls="option wrong";
+      else cls="option";
     }
-    h+='</div>';
-    document.getElementById('unitsScreen').innerHTML=h;
-    navigateTo('units');
+    const disabled=(revealed||(isPractice&&selected!==null))?"disabled":"";
+    let trailing="";
+    if(revealed && i===q.correct) trailing='<span class="check">'+I.check+'</span>';
+    else if(revealed && selected===i && i!==q.correct) trailing='<span class="x">'+I.x+'</span>';
+    return `<button class="${cls}" ${disabled} onclick="chooseAnswer(${i})">
+      <span class="badge">${String.fromCharCode(65+i)}</span><span>${esc(a)}</span>${trailing}</button>`;
+  }).join("");
+  let feedback="";
+  if(revealed){
+    const isRight=selected===q.correct;
+    feedback=`<div class="feedback ${isRight?'ok':'no'}">${isRight?I.check:I.info}
+      <div><b>${isRight?"إجابة صحيحة!":"إجابة خاطئة"}</b>
+        ${!isRight?`<div>الصحيحة: <b>${esc(q.a[q.correct])}</b></div>`:''}
+        ${q.exp?`<div style="margin-top:4px;font-weight:600;opacity:.9">💡 ${esc(q.exp)}</div>`:''}
+      </div></div>`;
+  }
+  const answeredCount=qs.answers.filter(x=>x!==null).length;
+  const progress=((qs.index+1)/qs.questions.length)*100;
+  const isLast=qs.index>=qs.questions.length-1;
+  document.getElementById("app").innerHTML=shell(`
+    <div class="quiz-head">
+      <div class="quiz-bar"><div>
+        <b>${esc(l.name)}</b>
+        <small>${esc(s.name)} • ${modeName} • السؤال ${qs.index+1} من ${qs.questions.length}</small>
+      </div>
+      ${qs.mode!=="practice"?`<div class="timer" id="quizTimer">${I.clock} ${formatTime(qs.seconds)}</div>`:`<div class="timer">${I.book} تدريب</div>`}
+      </div>
+      <div class="progress"><i style="width:${progress}%"></i></div>
+    </div>
+    <div class="question-card">
+      <div class="qtop"><span class="chip">${I.target} السؤال ${qs.index+1}</span><span>${answeredCount}/${qs.questions.length} مُجاب</span></div>
+      <div class="question">${esc(q.q)}</div>
+      <div class="options">${opts}</div>${feedback}
+    </div>
+    <div class="btn-row" style="margin-top:12px">
+      ${qs.index>0?`<button class="secondary" onclick="prevQ()">${I.arrowR} السابق</button>`:""}
+      ${!isLast?`<button class="primary" onclick="nextQ()">التالي ${I.arrowL}</button>`
+        :`<button class="success" onclick="finishQuiz(false)">${I.check} إنهاء</button>`}
+      <button class="danger" onclick="cancelQuiz()">${I.x} إلغاء</button>
+    </div>`,"");
+}
+function chooseAnswer(i){const qs=state.quiz;if(!qs||qs.revealed[qs.index])return;qs.answers[qs.index]=i;if(qs.mode==="practice") qs.revealed[qs.index]=true;renderQuiz()}
+function nextQ(){const qs=state.quiz;if(!qs)return;if(qs.answers[qs.index]===null){toast("اختر إجابة");return}if(qs.mode==="practice" && !qs.revealed[qs.index]){qs.revealed[qs.index]=true;renderQuiz();return}if(qs.index<qs.questions.length-1){qs.index++;renderQuiz()}}
+function prevQ(){const qs=state.quiz;if(qs&&qs.index>0){qs.index--;renderQuiz()}}
+function cancelQuiz(){
+  const qs=state.quiz;if(!qs)return;
+  if(!confirm("إلغاء الاختبار؟"))return;
+  clearInterval(quizTimer);state.quiz=null;_skipQuizConfirm=true;
+  try{ history.back(); }catch(e){ state.view="subject";render(); }
+}
+async function finishQuiz(auto){
+  const qs=state.quiz; if(!qs||qs.finished)return;
+  if(!auto && qs.answers.includes(null)){ if(!confirm("هناك أسئلة غير مُجابة. إنهاء؟"))return; }
+  clearInterval(quizTimer);
+  let score=0;const wrongIdx=[];
+  try{qs.questions.forEach((q,i)=>{if(!q)return;if(qs.answers[i]===q.correct)score++;else wrongIdx.push(q._origIndex!==undefined?q._origIndex:i)})}catch(e){score=0}
+  const percent=qs.questions.length?Math.round(score/qs.questions.length*100):0;
+  const lsInfo=findLessonSubject(qs.lessonId);
+  const subjName=lsInfo?lsInfo.s.name:"", lessonName=lsInfo?lsInfo.l.name:"";
+  let earned=score*10; if(percent===100) earned+=20; else if(percent>=80) earned+=5;
+  const result={id:uid("r"),lessonId:qs.lessonId,lessonName,subjectName:subjName,score,total:qs.questions.length,percent,wrongIdx,mode:qs.mode,date:new Date().toISOString(),points:earned,deviceId:DEVICE_ID,userName:db.user.name};
+  try{
+    db.results.push(result);
+    db.user.quizzesTaken=(db.user.quizzesTaken||0)+1;
+    db.user.correctTotal=(db.user.correctTotal||0)+score;
+    db.user.totalQuestions=(db.user.totalQuestions||0)+qs.questions.length;
+    db.user.points=(db.user.points||0)+earned;
+    if(db.users){const u=db.users.find(x=>x.deviceId===DEVICE_ID);if(u){u.points=db.user.points;u.lastSeen=new Date().toISOString()}}
+    saveDB();
+    // Sync to cloud
+    firestorePushResult(result);
+    firestoreSyncUser(DEVICE_ID, {
+      name: db.user.name,
+      points: db.user.points,
+      quizzesTaken: db.user.quizzesTaken,
+      correctTotal: db.user.correctTotal,
+      deviceInfo: DEVICE_INFO
+    });
+  }catch(e){ try{saveDB()}catch(_){} }
+  qs.result=result;qs.finished=true;state.view="quizResult";renderQuizResult();
+}
+function renderQuizResult(){
+  const qs=state.quiz, r=qs&&qs.result; if(!r){goHome();return}
+  const emoji = r.percent>=90?"🏆":r.percent>=70?"🎉":r.percent>=50?"💪":"📚";
+  const message = r.percent>=90?"أداء استثنائي!":r.percent>=70?"عمل رائع!":r.percent>=50?"جيد، راجع الدرس.":"كرر المحاولة.";
+  const ringColor = r.percent>=70?"#16a34a":r.percent>=50?"#f59e0b":"#e53935";
+  const pctDeg = Math.max(0,Math.min(360,r.percent*3.6));
+  document.getElementById("app").innerHTML=shell(`
+    <div class="result">
+      <div style="font-size:48px;margin-bottom:6px">${emoji}</div>
+      <div class="eyebrow" style="display:inline-flex">${I.check} تم إنهاء الاختبار</div>
+      <h2>${esc(r.lessonName)}</h2><p>${esc(r.subjectName)}</p>
+      <div class="score-circle" style="background:conic-gradient(${ringColor} 0deg ${pctDeg}deg, #e6edf1 ${pctDeg}deg 360deg);margin-top:18px">
+        <div style="text-align:center"><b>${r.percent}%</b><small>${r.score} من ${r.total}</small></div>
+      </div>
+      <div style="background:var(--primary-l);border:1px solid rgba(0,151,167,.2);border-radius:14px;padding:12px;margin:12px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:800;color:var(--primary-d);font-size:13px">${I.star} النقاط المكتسبة</span>
+          <b style="font-size:18px;color:var(--primary-d)">+${r.points||0}</b>
+        </div>
+      </div>
+      <p style="color:var(--muted);line-height:1.8;font-weight:600;font-size:12.5px">${message}</p>
+      <div class="btn-row" style="justify-content:center;margin-top:14px">
+        ${r.wrongIdx&&r.wrongIdx.length?`<button class="primary" onclick="startQuiz('${r.lessonId}','retry')">${I.refresh} تدرّب على الأخطاء (${r.wrongIdx.length})</button>`:''}
+        <button class="secondary" onclick="startQuiz('${r.lessonId}','practice')">${I.refresh} إعادة</button>
+        <button class="secondary" onclick="goHome()">${I.home} الرئيسية</button>
+        <button class="secondary" onclick="showLeaderboard()">${I.trophy} الصدارة</button>
+      </div>
+    </div>`,"");
 }
 
-function quickStart(unitIdx){selUnitIdx=unitIdx;selTime=40;selMode='random';selQCount='all';chkLessons=[];for(var i=0;i<7;i++)chkLessons[i]=true;startQuiz();}
-function customStart(unitIdx){selUnitIdx=unitIdx;selTime=40;selMode='random';selQCount='all';chkLessons=[];for(var i=0;i<7;i++)chkLessons[i]=true;var subject=selSubject;var unitName=unitNames[subject][unitIdx];var lessons=lessonNames[subject][unitIdx];var h='<div class="dialog-box"><h3>⚙️ تخصيص الاختبار</h3><p style="text-align:center;color:#666;font-size:9px;margin-bottom:8px">'+smeta[subject].emoji+' '+unitName+'</p>';h+='<div class="dialog-section"><h4>📖 اختر الدروس</h4><div style="display:flex;gap:4px;margin-bottom:5px">';h+='<button style="font-size:8px;padding:4px 8px;border-radius:5px;border:1.5px solid #1a8a4a;background:white;color:#1a8a4a;cursor:pointer;font-weight:700" onclick="checkAll(true)">✅ تحديد الكل</button>';h+='<button style="font-size:8px;padding:4px 8px;border-radius:5px;border:1.5px solid #d94040;background:white;color:#d94040;cursor:pointer;font-weight:700" onclick="checkAll(false)">❌ إلغاء الكل</button></div>';h+='<div class="lesson-list">';for(var i=0;i<lessons.length;i++){h+='<div class="lesson-chk checked" data-i="'+i+'" onclick="toggleLesson('+i+')"><div class="chk-box">✓</div>'+(i+1)+'. '+lessons[i]+'</div>';}h+='</div></div>';h+='<div class="dialog-section"><h4>⏱️ وقت السؤال</h4><div class="time-grid">';[15,30,40,60,90,120,180,240,300].forEach(function(v){h+='<div class="time-opt" data-v="'+v+'" onclick="selTime='+v+';syncCustomUI()">'+v+' ث</div>';});h+='</div></div>';h+='<div class="dialog-section"><h4>🔢 عدد الأسئلة</h4><div class="time-grid">';['10','15','20','25','30','all'].forEach(function(v){h+='<div class="time-opt" data-v="'+v+'" onclick="selQCount=\''+v+'\';syncCustomUI()">'+(v==='all'?'الكل':v)+'</div>';});h+='</div></div>';h+='<div class="dialog-actions"><button class="dialog-btn secondary" onclick="closeDialog()">إلغاء</button><button class="dialog-btn primary" onclick="startCustomQuiz()">🚀 بدء</button></div></div>';document.getElementById('dialogOverlay').innerHTML=h;document.getElementById('dialogOverlay').style.display='flex';}
-function syncCustomUI(){document.querySelectorAll('.time-opt').forEach(function(e){e.classList.toggle('sel',String(selTime)===e.getAttribute('data-v')||selQCount===e.getAttribute('data-v'))});}
-function checkAll(val){for(var i=0;i<7;i++){chkLessons[i]=val;var el=document.querySelector('.lesson-chk[data-i="'+i+'"]');if(el)el.classList.toggle('checked',val);}}
-function toggleLesson(i){chkLessons[i]=!chkLessons[i];var el=document.querySelector('.lesson-chk[data-i="'+i+'"]');if(el)el.classList.toggle('checked',chkLessons[i]);}
-async function startCustomQuiz(){var sc=0;for(var i=0;i<7;i++)if(chkLessons[i])sc++;if(sc===0){alert('⚠️ اختر درساً واحداً على الأقل');return;}closeDialog();var subject=selSubject;var unitNum=selUnitIdx+1;navigateTo('quiz');document.getElementById('quizScreen').innerHTML='<div class="loading-screen"><div class="loading-spinner"></div><p>⏳ تحميل الأسئلة...</p></div>';try{var snapshot=await db.collection('questions').where('subject','==',subject).where('unit','==',unitNum).get();var allQ=[];snapshot.forEach(function(doc){var d=doc.data();var lessonIdx=lessonNames[subject][unitNum-1].indexOf(d.lesson);if(lessonIdx!==-1&&chkLessons[lessonIdx])allQ.push(d);});if(allQ.length===0){document.getElementById('quizScreen').innerHTML='<div style="text-align:center;padding:40px;flex:1"><div style="font-size:50px">📭</div><p>لا توجد أسئلة</p><button class="btn-outline" onclick="goBack()">📚 رجوع</button></div>';return;}if(selMode==='random')allQ=shuf(allQ);if(selQCount!=='all'){var n=parseInt(selQCount);if(!isNaN(n)&&n>0&&n<allQ.length)allQ=allQ.slice(0,n);}Q=allQ;tq=Q.length;cq=0;sc=0;wr=[];renderQ();}catch(e){document.getElementById('quizScreen').innerHTML='<div style="text-align:center;padding:40px"><p>خطأ</p><button class="btn-outline" onclick="goBack()">📚 رجوع</button></div>';}}
-function closeDialog(){document.getElementById('dialogOverlay').style.display='none'}
-async function startQuiz(){closeDialog();var subject=selSubject;var unitNum=selUnitIdx+1;navigateTo('quiz');document.getElementById('quizScreen').innerHTML='<div class="loading-screen"><div class="loading-spinner"></div><p>⏳ تحميل الأسئلة...</p></div>';try{var snapshot=await db.collection('questions').where('subject','==',subject).where('unit','==',unitNum).get();var allQ=[];snapshot.forEach(function(doc){allQ.push(doc.data());});if(allQ.length===0){document.getElementById('quizScreen').innerHTML='<div style="text-align:center;padding:40px;flex:1"><div style="font-size:50px">📭</div><p>لا توجد أسئلة</p><button class="btn-outline" onclick="goBack()">📚 رجوع</button></div>';return;}if(selMode==='random')allQ=shuf(allQ);if(selQCount!=='all'){var n=parseInt(selQCount);if(!isNaN(n)&&n>0&&n<allQ.length)allQ=allQ.slice(0,n);}Q=allQ;tq=Q.length;cq=0;sc=0;wr=[];renderQ();}catch(e){document.getElementById('quizScreen').innerHTML='<div style="text-align:center;padding:40px"><p>خطأ</p><button class="btn-outline" onclick="goBack()">📚 رجوع</button></div>';}}
-function shuf(a){var b=a.slice();for(var i=b.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=b[i];b[i]=b[j];b[j]=t}return b}
-function shufOpt(o,c){var s=shuf(o.map(function(x,i){return{value:x,orig:i}}));return{options:s.map(function(x){return x.value}),correct:s.findIndex(function(x){return x.value===o[c]})}}
-function renderQ(){if(cq>=tq){showScore();return}an=false;rs=selTime;clearTimeout(window._to);var q=Q[cq],r=shufOpt(q.o,q.c);so=r.options;cai=r.correct;var h='<div class="quiz-top-bar"><button class="q-btn-sm" onclick="goBack()">←</button><span>'+selSubject+'</span><span id="timerBadge">⏱ '+rs+'</span></div>';h+='<div class="quiz-body"><div class="q-card" id="qCard">';h+='<div style="display:flex;justify-content:space-between;margin-bottom:5px"><span style="background:#1a8a4a;color:white;padding:2px 7px;border-radius:7px;font-size:10px">'+(cq+1)+'/'+tq+'</span><span style="font-size:8px;color:#666">'+(q.lesson||'')+'</span></div>';h+='<div class="q-text">'+q.q+'</div><div class="q-options">';for(var i=0;i<so.length;i++){h+='<div class="q-opt" id="opt'+i+'" onclick="pick('+i+')"><div class="opt-indicator">'+lb[i]+'</div><div>'+so[i]+'</div></div>'}h+='</div><div id="answerNote" style="text-align:center;padding:4px;margin-top:4px;border-radius:6px;font-size:9px;display:none"></div></div></div>';document.getElementById('quizScreen').innerHTML=h;startTimer();}
-function pick(i){if(an)return;an=true;clearInterval(window._ti);clearTimeout(window._to);document.querySelectorAll('.q-opt').forEach(function(o){o.classList.add('disabled')});var card=document.getElementById('qCard'),note=document.getElementById('answerNote');if(i===cai){document.getElementById('opt'+i).classList.add('correct');sc++;if(card)card.classList.add('correct-card');if(note){note.style.display='block';note.style.background='rgba(120,220,150,0.4)';note.style.color='#2E7D32';note.innerHTML='🎉 صحيح!'}window._to=setTimeout(function(){cq++;cq>=tq?showScore():renderQ();},1200);}else{document.getElementById('opt'+i).classList.add('wrong');document.getElementById('opt'+cai).classList.add('correct');wr.push({q:Q[cq].q,a:so[cai]});if(card)card.classList.add('wrong-card');if(note){note.style.display='block';note.style.background='rgba(255,110,110,0.3)';note.style.color='#C62828';note.innerHTML='❌ الصحيح: <span style="color:#2E7D32;font-weight:700">'+so[cai]+'</span>'}window._to=setTimeout(function(){cq++;cq>=tq?showScore():renderQ();},2500);}}
-function startTimer(){clearInterval(window._ti);rs=selTime;var badge=document.getElementById('timerBadge');window._ti=setInterval(function(){rs--;if(badge){badge.innerHTML='⏱ '+rs;if(rs<=5)badge.style.color='#FF5252'}if(rs<=0){clearInterval(window._ti);if(!an){an=true;document.querySelectorAll('.q-opt').forEach(function(o){o.classList.add('disabled')});document.getElementById('opt'+cai).classList.add('correct');wr.push({q:Q[cq].q,a:so[cai]});window._to=setTimeout(function(){cq++;cq>=tq?showScore():renderQ();},2500);}}},1000);}
-function showScore(){clearInterval(window._ti);clearTimeout(window._to);var p=Math.round((sc/tq)*100),e=p>=90?'🏆':p>=75?'👏':p>=60?'👍':'💪';var h='<div class="quiz-top-bar"><span>🏁 النتيجة</span><div></div></div><div class="score-screen"><div style="font-size:55px">'+e+'</div><div class="score-ring">'+p+'%</div><p>'+sc+'/'+tq+'</p>';if(wr.length>0){h+='<div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:8px;margin:6px 0;text-align:right"><b style="color:#d94040;font-size:10px">📋 الأخطاء</b>';for(var i=0;i<Math.min(wr.length,5);i++){h+='<div style="background:rgba(255,110,110,0.2);padding:6px;border-radius:6px;margin:2px 0;font-size:9px;border-right:2px solid #FF5252"><span style="color:#C62828">❌ '+wr[i].q+'</span><br><span style="color:#2E7D32">✅ '+wr[i].a+'</span></div>'}h+='</div>';}h+='<button class="btn" onclick="startQuiz()">🔄 إعادة</button><button class="btn-outline" onclick="showUnits(selSubject)">📚 رجوع</button></div>';saveScoreToLeaderboard(sc,tq);if(currentChallengeId){var myUid=localStorage.getItem('student_uid');db.collection('challenges').doc(currentChallengeId).get().then(function(doc){var data=doc.data();var updateData={};if(data.player1Id===myUid){updateData.player1Score=sc;}else if(data.player2Id===myUid){updateData.player2Score=sc;}if((data.player1Score>0||(data.player1Id===myUid))&&(data.player2Score>0||(data.player2Id===myUid))){if(data.player1Id===myUid&&data.player2Score>0)updateData.status='done';if(data.player2Id===myUid&&data.player1Score>0)updateData.status='done';}db.collection('challenges').doc(currentChallengeId).update(updateData);});}document.getElementById('quizScreen').innerHTML=h;}
+/* ===== Results ===== */
+function renderResults(){
+  const rs=[...db.results].reverse();
+  const best=rs.length?Math.max(...rs.map(r=>r.percent)):0;
+  const avg=rs.length?Math.round(rs.reduce((s,r)=>s+r.percent,0)/rs.length):0;
+  return `<div class="section-title"><h2>${I.chart} نتائجي</h2><span>${rs.length} محاولة</span></div>
+  <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
+    <div class="stat teal"><b>${rs.length}</b><span>اختبار</span></div>
+    <div class="stat green"><b>${best}%</b><span>أفضل</span></div>
+    <div class="stat gold"><b>${avg}%</b><span>المتوسط</span></div>
+  </div>
+  ${rs.length?`<div class="card">${rs.map(r=>`
+    <div class="result-row">
+      <div class="lesson-info"><div class="lesson-icon">${r.percent>=70?I.trophy:I.book}</div>
+        <div><b>${esc(r.lessonName)}</b><small>${esc(r.subjectName)} • ${r.score}/${r.total} • ${fmtDate(r.date)}</small></div>
+      </div>
+      <span class="pct ${r.percent>=70?'good':r.percent<50?'bad':''}">${r.percent}%</span>
+    </div>`).join("")}</div>`
+  :`<div class="empty">${I.chart}<div>لم تبدأ أي اختبار بعد.</div><br><button class="primary" onclick="showSubjects()">${I.play} ابدأ</button></div>`}`;
+}
 
-// ==================== نظام التحدي ====================
-function openChallenges(){var h='<div class="dialog-box" style="max-width:95%;width:95%"><h3>🎯 تحدي الأصدقاء</h3>';h+='<div style="display:flex;gap:5px;margin-bottom:10px">';h+='<button class="challenge-btn" onclick="createChallenge()">➕ إنشاء تحدي جديد</button>';h+='</div><div id="challengeContent"></div>';h+='<button class="btn-red" onclick="document.getElementById(\'challengeOverlay\').style.display=\'none\'" style="width:100%;margin-top:10px">❌ إغلاق</button></div>';document.getElementById('challengeOverlay').innerHTML=h;document.getElementById('challengeOverlay').style.display='flex';loadMyChallenges();}
-async function loadMyChallenges(){var content=document.getElementById('challengeContent');if(!content)return;var myUid=localStorage.getItem('student_uid');if(!myUid){content.innerHTML='<p style="text-align:center;color:#aaa">سجل دخولك أولاً</p>';return;}content.innerHTML='<p style="text-align:center;color:#aaa">⏳ تحميل...</p>';try{var snap=await db.collection('challenges').where('players','array-contains',myUid).orderBy('createdAt','desc').limit(10).get();if(snap.empty){content.innerHTML='<p style="text-align:center;color:#aaa;padding:20px">😴 لا توجد تحديات</p><p style="text-align:center"><button class="challenge-btn" onclick="createChallenge()">➕ إنشاء تحدي جديد</button></p>';return;}var h='<div class="challenge-list">';snap.forEach(function(doc){var d=doc.data();var p1=d.player1Name||'لاعب 1';var p2=d.player2Name||'لاعب 2';var s1=d.player1Score||0;var s2=d.player2Score||0;var status=d.status||'waiting';var st=status==='waiting'?'⏳ انتظار':(status==='playing'?'🟢 جاري':'✅ منتهي');h+='<div class="challenge-item"><div style="flex:1"><b>'+d.subject+'</b> - وحدة '+d.unit+'<br>'+p1+' 🆚 '+p2+'<br><span style="font-size:9px">'+st+'</span></div>';if(status==='waiting'||status==='playing'){h+='<button class="challenge-btn" onclick="joinChallengeRoom(\''+doc.id+'\')" style="width:auto;padding:8px 15px">▶️ دخول</button>';}if(status==='done'){h+='<div style="font-weight:900;color:gold">'+s1+' - '+s2+'</div>';}h+='<button class="copy-btn" onclick="copyChallengeLink(\''+doc.id+'\')">📋 نسخ</button></div>';});h+='</div>';content.innerHTML=h;}catch(e){}}
-function createChallenge(){var h='<div style="padding:10px"><label>📚 المادة</label><select id="chalSubject">';Object.keys(smeta).forEach(function(s){h+='<option value="'+s+'">'+smeta[s].emoji+' '+s+'</option>';});h+='</select><label>📖 الوحدة</label><select id="chalUnit">';for(var i=1;i<=7;i++)h+='<option value="'+i+'">الوحدة '+i+'</option>';h+='</select><label>🔢 عدد الأسئلة</label><select id="chalCount">';[5,10,15,20].forEach(function(n){h+='<option value="'+n+'">'+n+' سؤال</option>';});h+='</select><button class="challenge-btn" onclick="generateChallenge()" style="margin-top:10px">🚀 إنشاء التحدي</button><div id="challengeLink" style="margin-top:10px"></div></div>';document.getElementById('challengeContent').innerHTML=h;}
-async function generateChallenge(){var subject=document.getElementById('chalSubject').value;var unit=parseInt(document.getElementById('chalUnit').value);var count=parseInt(document.getElementById('chalCount').value)||10;var myName=localStorage.getItem('student_name')||'طالب';var myUid=localStorage.getItem('student_uid');var snap=await db.collection('questions').where('subject','==',subject).where('unit','==',unit).limit(count).get();var questions=[];snap.forEach(function(doc){questions.push(doc.data().q);});questions=questions.sort(function(){return Math.random()-0.5});var ref=await db.collection('challenges').add({subject:subject,unit:unit,player1Id:myUid,player1Name:myName,player1Score:0,player2Id:null,player2Name:null,player2Score:0,questions:questions,players:[myUid],status:'waiting',createdAt:firebase.firestore.FieldValue.serverTimestamp()});var link=window.location.href.split('?')[0]+'?challenge='+ref.id;document.getElementById('challengeLink').innerHTML='<div class="challenge-card"><h3>✅ تم إنشاء التحدي!</h3><p style="font-size:10px">انسخ الرابط وأرسله لصديقك</p><p style="font-size:10px;color:#ff9800">👥 الإثنين تدخلون نفس الرابط</p><div class="challenge-link" onclick="this.select()">'+link+'</div><button class="copy-btn" onclick="copyChallengeLink(\''+ref.id+'\')">📋 نسخ</button><button class="challenge-btn" onclick="joinChallengeRoom(\''+ref.id+'\')" style="margin-top:8px">▶️ دخول للتحدي</button></div>';}
-function copyChallengeLink(id){var link=window.location.href.split('?')[0]+'?challenge='+id;navigator.clipboard.writeText(link).then(function(){alert('✅ تم نسخ الرابط!\nأرسله لصديقك');});}
-async function joinChallengeRoom(challengeId){var myUid=localStorage.getItem('student_uid');var myName=localStorage.getItem('student_name')||'طالب';try{var docRef=db.collection('challenges').doc(challengeId);var doc=await docRef.get();if(!doc.exists){alert('❌ التحدي غير موجود');return;}var data=doc.data();var isPlayer1=(data.player1Id===myUid);if(!isPlayer1&&data.player2Id!==myUid){await docRef.update({player2Id:myUid,player2Name:myName,players:firebase.firestore.FieldValue.arrayUnion(myUid),status:'playing'});}currentChallengeId=challengeId;challengeSubject=data.subject;challengeQuestions=data.questions;var opponent=isPlayer1?(data.player2Name||'منتظر...'):data.player1Name;document.getElementById('challengeOverlay').style.display='none';var h='<div style="text-align:center;padding:30px"><div style="font-size:50px">⚡</div><h2 style="font-family:El Messiri,serif;color:#ff9800">تحدي الأصدقاء</h2><div class="vs">'+myName+' 🆚 '+opponent+'</div><p>📚 '+data.subject+' - وحدة '+data.unit+'</p><p style="color:#aaa">عدد الأسئلة: '+data.questions.length+'</p><p style="color:#ff9800;font-size:12px">⏱️ 15 ثانية لكل سؤال</p><button class="challenge-btn" onclick="startChallengeQuiz()" style="font-size:16px;padding:15px">🚀 ابدأ التحدي!</button></div>';navigateTo('quiz');document.getElementById('quizScreen').innerHTML=h;}catch(e){alert('❌ خطأ: '+e.message);}}
-function startChallengeQuiz(){Q=[];for(var i=0;i<challengeQuestions.length;i++){Q.push({q:challengeQuestions[i],o:['الإجابة 1','الإجابة 2','الإجابة 3','الإجابة 4'],c:Math.floor(Math.random()*4),lesson:'تحدي'});}tq=Q.length;cq=0;sc=0;wr=[];selSubject=challengeSubject;selTime=15;renderQ();}
+/* ===== Leaderboard ===== */
+function computeLeaderboard(){
+  const me={name:db.user.name||"طالب",avatar:db.user.avatar,points:db.user.points||0,isMe:true,quizzes:db.user.quizzesTaken||0};
+  const bots=[
+    {name:"أحمد الشامي",avatar:"🦁",points:1240,quizzes:42,isMe:false},
+    {name:"سارة العلي",avatar:"🦊",points:980,quizzes:35,isMe:false},
+    {name:"محمد ياسين",avatar:"🐯",points:870,quizzes:28,isMe:false},
+    {name:"ليان حمد",avatar:"🐼",points:720,quizzes:22,isMe:false},
+    {name:"عمر الخطيب",avatar:"🐺",points:590,quizzes:18,isMe:false},
+    {name:"نور الهدى",avatar:"🦉",points:460,quizzes:14,isMe:false},
+    {name:"يوسف نصر",avatar:"🦅",points:320,quizzes:10,isMe:false},
+    {name:"هبة سالم",avatar:"🌟",points:190,quizzes:6,isMe:false},
+    {name:"رامي فؤاد",avatar:"⚡",points:80,quizzes:3,isMe:false}
+  ];
+  return [...bots,me].sort((a,b)=>b.points-a.points);
+}
+function getUserRank(){const all=computeLeaderboard();const idx=all.findIndex(x=>x.isMe);return idx>=0?idx+1:all.length}
+function renderLeaderboard(){
+  const all=computeLeaderboard();
+  const [first,second,third]=all;
+  const me=all.find(x=>x.isMe);
+  const myRank=all.findIndex(x=>x.isMe)+1;
+  const podiumItem=(user,place)=>{
+    if(!user)return"";
+    const cls=place===1?"first":place===2?"second":"third";
+    return `<div class="podium-item ${cls}">${place===1?'<div class="podium-crown">👑</div>':""}
+      <div class="rank-num">${place}</div>
+      <div class="podium-avatar">${renderAvatar(user)}</div>
+      <b>${esc(user.name)}${user.isMe?' (أنت)':''}</b>
+      <div class="pts">${I.star} ${user.points}</div></div>`;
+  };
+  return `<div class="section-title"><h2>${I.trophy} لوحة الصدارة</h2></div>
+  <div class="podium">${podiumItem(second,2)}${podiumItem(first,1)}${podiumItem(third,3)}</div>
+  <div class="section-title" style="margin-top:18px"><h2>${I.award} الترتيب الكامل</h2><span>${all.length} طالب</span></div>
+  <div class="lb-list">${all.map((u,i)=>`
+    <div class="lb-row ${u.isMe?'me':''}">
+      <div class="pos ${i<3?'top':''}">${i+1}</div>
+      <div class="lb-avatar">${renderAvatar(u)}</div>
+      <div class="lb-info"><b>${esc(u.name)}${u.isMe?' · أنت':''}</b><small>${u.quizzes||0} اختبار • ${u.points} نقطة</small></div>
+      <div class="lb-pts">${I.star} ${u.points}</div>
+    </div>`).join("")}
+  </div>
+  <div class="notice" style="margin-top:14px">${I.info}<span>ترتيبك: <b>#${myRank}</b> • النقاط: <b>${me.points}</b></span></div>`;
+}
 
-// ==================== فتح التحدي من الرابط ====================
-(function checkChallengeLink(){var params=new URLSearchParams(window.location.search);var challengeId=params.get('challenge');if(challengeId){setTimeout(async function(){var myName=localStorage.getItem('student_name');if(!myName){document.getElementById('namePrompt').style.display='flex';window._pendingChallenge=challengeId;return;}joinChallengeRoom(challengeId);},1500);}})();
+/* ===== Profile ===== */
+function renderProfile(){
+  const u=db.user;
+  const rank=getUserRank();
+  const rs=db.results;
+  const best=rs.length?Math.max(...rs.map(r=>r.percent)):0;
+  const di=DEVICE_INFO;
+  return `
+  <div class="profile-header">
+    <div class="profile-top">
+      <div class="profile-avatar">${renderAvatar(u)}</div>
+      <div class="profile-info">
+        <h2>${esc(u.name)}</h2>
+        <div class="rank-line"><span>${I.crown} الترتيب #${rank}</span> • <span>${u.points||0} نقطة</span></div>
+        <div class="device-chip">${I.smartphone} ${esc(di.model||DEVICE_ID)}</div>
+      </div>
+    </div>
+    <div class="profile-stats">
+      <div class="profile-stat"><b>${u.quizzesTaken||0}</b><span>اختبار</span></div>
+      <div class="profile-stat"><b>${u.correctTotal||0}</b><span>صحيحة</span></div>
+      <div class="profile-stat"><b>${best}%</b><span>الأفضل</span></div>
+    </div>
+  </div>
+  <div class="profile-section">
+    <h3>${I.cloud} حالة السحابة</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">${cloudBadge()}<span style="font-size:11px;color:var(--muted);font-weight:700">${cloud.ok?'Firestore نشط':'وضع محلي فقط'}</span></div>
+  </div>
+  <div class="profile-section">
+    <h3>${I.smartphone} معلومات جهازك</h3>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface-2);border-radius:11px">
+        <span style="color:var(--muted);font-size:11.5px;font-weight:800">${I.cpu} الطراز</span>
+        <b style="font-size:12px">${esc(di.model||"غير معروف")}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface-2);border-radius:11px">
+        <span style="color:var(--muted);font-size:11.5px;font-weight:800">${I.smartphone} النظام</span>
+        <b style="font-size:12px">${esc(di.platform||"")}${di.platformVersion?" "+esc(di.platformVersion):''}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--primary-l);border-radius:11px">
+        <span style="color:var(--primary-d);font-size:11.5px;font-weight:800">${I.shield} معرّف الجهاز</span>
+        <b class="mono" style="font-size:11px;color:var(--primary-d)">${esc(DEVICE_ID)}</b>
+      </div>
+    </div>
+  </div>
+  <div class="profile-section">
+    <h3>${I.edit} تعديل الاسم</h3>
+    <div class="field" style="margin-bottom:10px"><input id="profileName" value="${esc(u.name)}" placeholder="اكتب اسمك..."></div>
+    <button class="primary" onclick="saveProfileName()">${I.save} حفظ</button>
+  </div>
+  <div class="profile-section">
+    <h3>${I.user} صورتك الشخصية</h3>
+    <div class="avatar-picker">${AVATARS.map(a=>`<button class="avatar-opt ${u.avatar===a?'selected':''}" onclick="setAvatar('${a}')">${a}</button>`).join("")}</div>
+    <div style="height:10px"></div>
+    <button class="secondary" onclick="document.getElementById('avatarFile').click()">${I.upload} رفع صورة</button>
+    <input id="avatarFile" type="file" accept="image/*" class="hidden" onchange="uploadAvatar(event)">
+  </div>
+  <div class="profile-section">
+    <h3>${I.shield} أدوات الحساب</h3>
+    <button class="danger" onclick="resetMyProgress()">${I.refresh} تصفير تقدمي</button>
+  </div>`;
+}
+function saveProfileName(){
+  const v=document.getElementById("profileName").value.trim();
+  if(!v){toast("اكتب اسمك");return}
+  db.user.name=v;
+  if(db.users){const u=db.users.find(x=>x.deviceId===DEVICE_ID);if(u)u.name=v}
+  saveDB();
+  firestoreSyncUser(DEVICE_ID, { name:v, deviceInfo:DEVICE_INFO });
+  render();toast("تم");
+}
+function setAvatar(a){db.user.avatar=a;saveDB();render()}
+function uploadAvatar(ev){
+  const f=ev.target.files[0];if(!f)return;
+  if(f.size>500*1024){toast("الحد 500KB");return}
+  const r=new FileReader();r.onload=e=>{db.user.avatar=e.target.result;saveDB();render();toast("تم")};r.readAsDataURL(f);
+}
+function resetMyProgress(){
+  if(!confirm("حذف كل نقاطك ونتائجك؟"))return;
+  db.user.points=0;db.user.quizzesTaken=0;db.user.correctTotal=0;db.user.totalQuestions=0;db.results=[];
+  if(db.users){const u=db.users.find(x=>x.deviceId===DEVICE_ID);if(u)u.points=0}
+  saveDB();render();toast("تم");
+}
 
-// ==================== تشغيل ====================
-buildHome();
-loadNews();
-loadLinks();
+/* =========================================================
+   Admin
+   ========================================================= */
+function openAdminLogin(){
+  showModal(`<div class="modal-head"><h2>${I.shield} دخول الإدارة</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+    <div class="field"><label>كلمة المرور</label><input id="adminPass" type="password" placeholder="أدخل كلمة المرور"></div>
+    <div style="height:12px"></div>
+    <button class="primary" style="width:100%" onclick="loginAdmin()">${I.check} دخول</button>
+    <p style="color:var(--muted);font-size:10.5px;margin:10px 0 0;text-align:center">الافتراضية: 1234</p>`);
+}
+function loginAdmin(){
+  const p=document.getElementById("adminPass").value;
+  if(p!==db.settings.adminPassword){toast("كلمة المرور غير صحيحة");return}
+  closeModal();state.admin=true;nav("admin");toast("تم الدخول");
+  loadCloudBansIntoState();
+}
+function logoutAdmin(){state.admin=false;nav("home");toast("تم الخروج")}
+function showAdmin(){if(!state.admin)return openAdminLogin();nav("admin");loadCloudBansIntoState()}
+
+async function loadCloudBansIntoState(){
+  const list = await firestoreFetchBans();
+  if(list) state.cloudBans = list;
+  if(state.view==="admin" && state.adminPanel==="banned") render();
+}
+
+function renderAdmin(){
+  const panel=state.adminPanel;
+  const navItems=[
+    ["dashboard",I.grid,"التحكم"],
+    ["subjects",I.book,"المواد"],
+    ["lessons",I.play,"الدروس"],
+    ["results",I.chart,"النتائج"],
+    ["users",I.users,"المستخدمون"],
+    ["banned",I.ban,"المحظورون"],
+    ["backup",I.save,"النسخ"],
+    ["settings",I.settings,"الإعدادات"]
+  ];
+  const body = panel==="dashboard"?adminDashboard():panel==="subjects"?adminSubjects():panel==="lessons"?adminLessons():panel==="results"?adminResults():panel==="users"?adminUsers():panel==="banned"?adminBanned():panel==="backup"?adminBackup():adminSettings();
+  document.getElementById("app").innerHTML=shell(`
+    <div class="section-title"><h2>${I.shield} لوحة الإدارة</h2>${cloudBadge()}</div>
+    <div class="admin-grid">
+      <aside class="admin-nav">${navItems.map(n=>`<button class="${panel===n[0]?'active':''}" onclick="state.adminPanel='${n[0]}';render()">${n[1]}<span>${n[2]}</span></button>`).join("")}</aside>
+      <section class="admin-content">${body}</section>
+    </div>`,"admin");
+}
+
+function adminDashboard(){
+  const bannedCount=(db.bannedDevices||[]).length;
+  const cloudBannedCount = (state.cloudBans||[]).length;
+  return `<div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:12px">
+    <div class="stat teal"><b>${db.subjects.length}</b><span>مواد</span></div>
+    <div class="stat"><b>${totalUnits()}</b><span>وحدات</span></div>
+    <div class="stat green"><b>${totalLessons()}</b><span>دروس</span></div>
+    <div class="stat gold"><b>${totalQuestions()}</b><span>أسئلة</span></div>
+  </div>
+  <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:12px">
+    <div class="stat teal"><b>${(db.users||[]).length}</b><span>مستخدم</span></div>
+    <div class="stat red"><b>${cloudBannedCount||bannedCount}</b><span>محظور</span></div>
+    <div class="stat green"><b>${db.results.length}</b><span>نتيجة</span></div>
+  </div>
+  <div class="admin-card">
+    <h3>${I.cloud} حالة السحابة</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      ${cloudBadge()}
+      <button class="secondary" onclick="reconnectFirebase()">${I.refresh} إعادة الاتصال</button>
+    </div>
+    ${!cloud.ok && cloud.lastError?`<div class="notice warn-note" style="margin-top:10px">${I.info}<span>${esc(cloud.lastError)}</span></div>`:""}
+    ${cloud.ok?`<div class="notice ok-note" style="margin-top:10px">${I.check}<span>مشروع: ${esc(FIREBASE_CONFIG.projectId)} • ${cloudBannedCount} حظر على السحابة</span></div>`:""}
+  </div>
+  <div class="admin-card">
+    <h3>${I.plus} إدارة سريعة</h3>
+    <div class="btn-row">
+      <button class="primary" onclick="newSubject()">${I.plus} مادة</button>
+      <button class="secondary" onclick="newUnit()">${I.plus} وحدة</button>
+      <button class="secondary" onclick="newLesson()">${I.plus} درس</button>
+      <button class="secondary" onclick="newQuestion()">${I.plus} سؤال</button>
+      <button class="warn" onclick="importQuestionsJSON()">${I.code} JSON</button>
+    </div>
+  </div>`;
+}
+
+async function reconnectFirebase(){
+  cloud.checking=true;cloud.ok=false;cloud.lastError="";
+  render();
+  await initFirebase();
+  if(cloud.ok){
+    await loadCloudBansIntoState();
+    setupBanWatcher();
+    toast("تم الاتصال بالسحابة ✓");
+  } else {
+    toast("فشل الاتصال: "+cloud.lastError);
+  }
+  render();
+}
+
+function adminSubjects(){
+  return `<div class="admin-card">
+    <div class="section-title" style="margin:0 0 10px"><h3 style="margin:0">${I.book} المواد</h3>
+      <button class="primary" onclick="newSubject()">${I.plus} مادة</button></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>المادة</th><th>الوحدات</th><th>الدروس</th><th>الأسئلة</th><th>إجراءات</th></tr></thead>
+      <tbody>${db.subjects.map(s=>{
+        const les=s.units.reduce((n,u)=>n+u.lessons.length,0);
+        const qs=s.units.reduce((n,u)=>n+u.lessons.reduce((m,l)=>m+l.questions.length,0),0);
+        return `<tr>
+          <td><span style="font-size:18px;vertical-align:middle">${esc(s.icon)}</span> ${esc(s.name)}</td>
+          <td>${s.units.length}</td><td>${les}</td><td>${qs}</td>
+          <td>
+            <button class="mini-btn" onclick="editSubject('${s.id}')">${I.edit}</button>
+            <button class="mini-btn danger" onclick="deleteSubject('${s.id}')">${I.trash}</button>
+          </td>
+        </tr>`;
+      }).join("")||`<tr><td colspan="5">لا توجد مواد.</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function adminLessons(){
+  if(!db.subjects.length) return `<div class="empty">${I.book}<div>لا توجد مواد.</div></div>`;
+  let html="";
+  db.subjects.forEach(s=>{
+    html += `<div class="tree-subject">
+      <div class="tree-subj-head">
+        <div class="ttl"><span class="icon-box">${esc(s.icon)}</span> <span>${esc(s.name)}</span></div>
+        <button class="mini-btn primary" onclick="newUnitFor('${s.id}')">${I.plus} وحدة</button>
+      </div>`;
+    if(!s.units.length){html += `<div style="padding:10px;color:var(--muted);font-size:12px;text-align:center">لا توجد وحدات.</div>`}
+    else s.units.forEach(u=>{
+      html += `<div class="tree-unit">
+        <div class="tree-unit-head">
+          <div class="u-ttl">${I.layers} ${esc(u.name)} <small style="color:var(--muted)">(${u.lessons.length} درس)</small></div>
+          <div style="display:flex;gap:4px">
+            <button class="mini-btn" onclick="editUnit('${u.id}')">${I.edit}</button>
+            <button class="mini-btn primary" onclick="newLessonFor('${u.id}')">${I.plus}</button>
+            <button class="mini-btn danger" onclick="deleteUnit('${u.id}')">${I.trash}</button>
+          </div>
+        </div>`;
+      if(!u.lessons.length){html += `<div style="padding:8px;color:var(--muted);font-size:11.5px">لا توجد دروس.</div>`}
+      else u.lessons.forEach(l=>{
+        html += `<div class="tree-lesson">
+          <div class="tree-lesson-info"><b>${esc(l.name)}</b><small>${l.questions.length} سؤال</small></div>
+          <div style="display:flex;gap:4px">
+            <button class="mini-btn" onclick="editLesson('${l.id}')">${I.edit}</button>
+            <button class="mini-btn primary" onclick="manageQuestions('${l.id}')">${I.layers}</button>
+            <button class="mini-btn gold" onclick="importQuestionsJSONFor('${l.id}')">${I.code}</button>
+            <button class="mini-btn danger" onclick="deleteLesson('${l.id}')">${I.trash}</button>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  });
+  return `<div class="admin-card">
+    <div class="section-title" style="margin:0 0 10px"><h3 style="margin:0">${I.play} الدروس</h3></div>
+    ${html}
+  </div>`;
+}
+
+function adminUsers(){
+  const users=db.users||[];
+  return `<div class="admin-card">
+    <div class="section-title" style="margin:0 0 10px"><h3 style="margin:0">${I.users} المستخدمون</h3><span style="color:var(--muted);font-size:11px">${users.length} مستخدم</span></div>
+    <div class="btn-row" style="margin-bottom:10px">
+      <button class="secondary" onclick="refreshUsersFromCloud()">${I.cloud} تحديث من السحابة</button>
+      <button class="secondary" onclick="loadCloudBansIntoState();toast('تم التحديث')">${I.ban} مزامنة الحظر</button>
+    </div>
+    ${users.length?`<div class="table-wrap"><table>
+      <thead><tr><th>الاسم</th><th>الجهاز</th><th>المعرّف</th><th>النقاط</th><th>الحالة</th><th>إجراءات</th></tr></thead>
+      <tbody>${users.map(u=>{
+        const banned=isBanned(u.deviceId);
+        const isMe=u.deviceId===DEVICE_ID;
+        const info=u.deviceInfo||{};
+        const model=info.model||"";
+        return `<tr>
+          <td>${esc(u.name)}${isMe?' <b style="color:var(--primary)">(حالي)</b>':''}</td>
+          <td style="font-size:11px">${esc(model)}${info.platform?`<br><span style="color:var(--muted);font-size:10px">${esc(info.platform)}</span>`:''}</td>
+          <td class="mono">${esc(u.deviceId)}</td>
+          <td>${u.points||0}</td>
+          <td>${banned?`<span style="color:var(--red);font-weight:900;font-size:11px">🚫 محظور</span>`:`<span style="color:var(--green);font-weight:900;font-size:11px">✓ نشط</span>`}</td>
+          <td>
+            ${banned?`<button class="mini-btn" onclick="unbanDevice('${u.deviceId}')">${I.unlock} فك</button>`
+              :`<button class="mini-btn danger" onclick="banDevice('${u.deviceId}','${esc(u.name).replace(/'/g,"\\'")}')">${I.ban} حظر</button>`}
+            <button class="mini-btn danger" onclick="deleteUser('${u.id}')">${I.trash}</button>
+          </td>
+        </tr>`;
+      }).join("")}
+      </tbody>
+    </table></div>`:`<div class="empty">${I.users}<div>لا يوجد مستخدمون.</div></div>`}
+  </div>`;
+}
+
+async function refreshUsersFromCloud(){
+  if(!cloud.ok){toast("السحابة غير متصلة");return}
+  const list = await firestoreFetchUsers();
+  if(!list){toast("فشل التحديث");return}
+  // Merge into db.users
+  if(!db.users) db.users=[];
+  list.forEach(u=>{
+    const existing = db.users.find(x=>x.deviceId===u.deviceId);
+    if(existing){
+      existing.name = u.name || existing.name;
+      existing.points = u.points!=null?u.points:existing.points;
+      existing.deviceInfo = u.deviceInfo || existing.deviceInfo;
+      existing.lastSeen = u.lastSeen || existing.lastSeen;
+    } else {
+      db.users.push({
+        id: uid("u"),
+        name: u.name || "طالب",
+        deviceId: u.deviceId,
+        deviceInfo: u.deviceInfo||{},
+        createdAt: u.joinedAt || new Date().toISOString(),
+        lastSeen: u.updatedAt || new Date().toISOString(),
+        points: u.points||0
+      });
+    }
+  });
+  saveDB();render();toast("تم استيراد "+list.length+" مستخدم من السحابة");
+}
+
+async function adminBanned(){
+  // Refresh cloud list
+  if(cloud.ok){
+    const list = await firestoreFetchBans();
+    if(list) state.cloudBans = list;
+  }
+  const cloudList = state.cloudBans||[];
+  const localList = (db.bannedDevices||[]).filter(d=>!cloudList.some(c=>c.deviceId===d));
+  const total = cloudList.length + localList.length;
+  return `<div class="admin-card">
+    <div class="section-title" style="margin:0 0 10px"><h3 style="margin:0">${I.ban} المحظورون</h3><span style="color:var(--muted);font-size:11px">${total} جهاز</span></div>
+    <div class="notice ${cloud.ok?'ok-note':'warn-note'}">${cloud.ok?I.check:I.info}<span>${cloud.ok?'الحظر عالمي عبر السحابة — يُطبَّق فورياً على جهاز المستخدم.':'السحابة غير متصلة — الحظر محلي فقط.'}</span></div>
+    <div style="height:10px"></div>
+    <div class="btn-row" style="margin-bottom:12px">
+      <button class="secondary" onclick="reconnectFirebase()">${I.refresh} إعادة الاتصال</button>
+      <button class="secondary" onclick="render()">${I.cloud} تحديث القائمة</button>
+    </div>
+    <div class="field" style="margin-bottom:10px"><label>أضف جهازاً للحظر يدوياً</label>
+      <input id="manualBanId" placeholder="AND-SM-G991B-A3F2C1" style="direction:ltr;text-align:left;font-family:monospace"></div>
+    <button class="danger" onclick="manualBanDevice()">${I.ban} حظر الجهاز</button>
+  </div>
+
+  ${cloudList.length?`<div class="admin-card">
+    <h3>${I.cloud} حظر السحابة (${cloudList.length})</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>معرّف الجهاز</th><th>الاسم</th><th>السبب</th><th>التاريخ</th><th>إجراء</th></tr></thead>
+      <tbody>${cloudList.map(d=>{
+        const u=(db.users||[]).find(x=>x.deviceId===d.deviceId);
+        return `<tr>
+          <td class="mono">${esc(d.deviceId)}</td>
+          <td>${esc((u&&u.name)||'—')}</td>
+          <td>${esc(d.reason||'—')}</td>
+          <td>${d.bannedAtMs?fmtDate(d.bannedAtMs):'—'}</td>
+          <td><button class="mini-btn" onclick="unbanDevice('${d.deviceId}')">${I.unlock} فك</button></td>
+        </tr>`;
+      }).join("")}
+      </tbody>
+    </table></div>
+  </div>`:""}
+
+  ${localList.length?`<div class="admin-card">
+    <h3>${I.smartphone} حظر محلي (${localList.length})</h3>
+    <div class="table-wrap"><table>
+      <thead><tr><th>معرّف الجهاز</th><th>إجراء</th></tr></thead>
+      <tbody>${localList.map(d=>`<tr>
+        <td class="mono">${esc(d)}</td>
+        <td><button class="mini-btn" onclick="unbanDevice('${d}')">${I.unlock} فك</button></td>
+      </tr>`).join("")}
+      </tbody>
+    </table></div>
+  </div>`:""}
+
+  ${!total?`<div class="empty">${I.unlock}<div>لا توجد أجهزة محظورة.</div></div>`:""}`;
+}
+
+async function banDevice(deviceId, name){
+  if(!confirm(`حظر "${name||deviceId}" نهائياً؟\n\n⚠️ سيُطبَّق الحظر فوراً على جهاز المستخدم حتى لو كان التطبيق مفتوحاً.`))return;
+  // 1) Local
+  if(!db.bannedDevices) db.bannedDevices=[];
+  if(db.bannedDevices.indexOf(deviceId)===-1) db.bannedDevices.push(deviceId);
+  saveDB();
+  await applyLocalBan(deviceId, "");
+  // 2) Cloud
+  const cloudOk = await firestoreSetBan(deviceId, {
+    name: name||"",
+    reason: "",
+    bannedBy: db.user.name || "admin"
+  });
+  // 3) If self → lock now
+  if(deviceId === DEVICE_ID){ _isBanned = true; }
+  // 4) Refresh admin list
+  await loadCloudBansIntoState();
+  render();
+  toast(cloudOk ? "تم الحظر (محلي + سحابي) 🚫" : "تم الحظر محلياً — السحابة غير متصلة");
+}
+
+async function unbanDevice(deviceId){
+  if(!confirm("فك الحظر عن هذا الجهاز؟"))return;
+  db.bannedDevices=(db.bannedDevices||[]).filter(d=>d!==deviceId);
+  saveDB();
+  await removeLocalBan(deviceId);
+  const cloudOk = await firestoreRemoveBan(deviceId);
+  if(deviceId === DEVICE_ID){ _isBanned=false; }
+  await loadCloudBansIntoState();
+  render();
+  toast(cloudOk ? "تم فك الحظر (محلي + سحابي)" : "تم محلياً");
+}
+
+async function manualBanDevice(){
+  const v=document.getElementById("manualBanId").value.trim();
+  if(!v){toast("أدخل معرّف الجهاز");return}
+  if(isBanned(v)){toast("محظور مسبقاً");return}
+  await banDevice(v, "");
+}
+
+function deleteUser(userId){
+  const u=(db.users||[]).find(x=>x.id===userId);
+  if(!u)return;
+  if(!confirm(`حذف "${u.name}" من القائمة؟`))return;
+  db.users=db.users.filter(x=>x.id!==userId);saveDB();render();toast("تم");
+}
+
+function adminResults(){
+  const rs=[...db.results].reverse();
+  return `<div class="admin-card">
+    <div class="section-title" style="margin:0 0 10px"><h3 style="margin:0">${I.chart} النتائج</h3>
+      <button class="danger" onclick="clearResults()">${I.trash} مسح</button></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>التاريخ</th><th>المستخدم</th><th>المادة</th><th>الدرس</th><th>النسبة</th><th>النقاط</th></tr></thead>
+      <tbody>${rs.map(r=>`<tr>
+        <td>${fmtDate(r.date)}</td><td>${esc(r.userName||"")}</td><td>${esc(r.subjectName)}</td>
+        <td>${esc(r.lessonName)}</td><td>${r.score}/${r.total} — <b>${r.percent}%</b></td><td>+${r.points||0}</td>
+      </tr>`).join("")||`<tr><td colspan="6">لا توجد نتائج.</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+}
+
+function adminBackup(){
+  return `<div class="admin-card">
+    <h3>${I.save} النسخ الاحتياطي</h3>
+    <p style="color:var(--muted);line-height:1.85;font-weight:600;font-size:12.5px">صدّر كل شيء محلياً إلى JSON. الحظر السحابي محفوظ في Firebase.</p>
+    <div class="btn-row">
+      <button class="primary" onclick="exportDB()">${I.download} تصدير محلي</button>
+      <button class="secondary" onclick="document.getElementById('importFile').click()">${I.upload} استيراد محلي</button>
+      <input id="importFile" type="file" accept=".json" class="hidden" onchange="importDB(event)">
+    </div>
+  </div>
+  <div class="admin-card">
+    <h3>${I.cloud} حالة السحابة</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">${cloudBadge()}<span class="mono" style="font-size:11px;color:var(--muted)">${esc(FIREBASE_CONFIG.projectId)}</span></div>
+    <div class="notice" style="margin-top:10px">${I.shield}<span>الحظر يُحفظ على Firestore collection: <b>bans</b> — يُطبَّق فورياً على الجهاز عبر <b>onSnapshot</b>.</span></div>
+  </div>`;
+}
+
+function adminSettings(){
+  return `<div class="admin-card">
+    <h3>${I.settings} الإعدادات</h3>
+    <div class="form-grid">
+      <div class="field"><label>اسم المنصة</label><input id="setName" value="${esc(db.settings.appName)}"></div>
+      <div class="field"><label>زمن الاختبار (ثواني/سؤال)</label><input id="setTimer" type="number" min="10" value="${db.settings.timerDefault}"></div>
+      <div class="field full"><label>كلمة المرور الجديدة</label><input id="setPass" type="password" placeholder="اتركها فارغة للإبقاء"></div>
+    </div>
+    <div style="height:12px"></div>
+    <button class="primary" onclick="saveSettings()">${I.save} حفظ</button>
+  </div>
+  <div class="admin-card">
+    <h3>${I.trash} منطقة الخطر</h3>
+    <button class="danger" onclick="resetDB()">${I.refresh} إعادة النظام للافتراضي</button>
+  </div>`;
+}
+
+/* ===== CRUD ===== */
+function iconPickerHTML(selected){
+  return `<div class="icon-picker" id="iconPicker">${SUBJECT_ICONS.map(ic=>`<button type="button" class="icon-opt ${ic===selected?'selected':''}" onclick="pickIcon('${ic}')">${ic}</button>`).join("")}</div>`;
+}
+function pickIcon(ic){
+  document.querySelectorAll("#iconPicker .icon-opt").forEach(el=>el.classList.remove("selected"));
+  const btn=[...document.querySelectorAll("#iconPicker .icon-opt")].find(b=>b.textContent===ic);
+  if(btn)btn.classList.add("selected");
+  const inp=document.getElementById("fIcon");
+  if(inp)inp.value=ic;
+}
+function newSubject(){
+  showModal(`<div class="modal-head"><h2>${I.plus} إضافة مادة</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="form-grid">
+    <div class="field"><label>الاسم</label><input id="fName" placeholder="مثال: الأحياء"></div>
+    <div class="field"><label>إيموجي مخصص</label><input id="fIcon" value="📚" maxlength="4" oninput="pickIcon(this.value)"></div>
+    <div class="field full"><label>الوصف</label><textarea id="fDesc" rows="3"></textarea></div>
+    <div class="field full"><label>${I.paint} اختر أيقونة</label>${iconPickerHTML("📚")}</div>
+  </div>
+  <div style="height:12px"></div>
+  <button class="primary" style="width:100%" onclick="saveSubject()">${I.save} حفظ</button>`);
+}
+function saveSubject(){
+  const name=document.getElementById("fName").value.trim();
+  if(!name)return toast("اكتب اسم المادة");
+  const icon=(document.getElementById("fIcon").value||"📚").trim().slice(0,4)||"📚";
+  db.subjects.push({id:uid("s"),name,icon,desc:document.getElementById("fDesc").value.trim(),units:[]});
+  saveDB();closeModal();render();toast("تم");
+}
+function editSubject(id){
+  const s=subject(id);if(!s)return;
+  showModal(`<div class="modal-head"><h2>${I.edit} تعديل المادة</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="form-grid">
+    <div class="field"><label>الاسم</label><input id="fName" value="${esc(s.name)}"></div>
+    <div class="field"><label>إيموجي مخصص</label><input id="fIcon" value="${esc(s.icon)}" maxlength="4" oninput="pickIcon(this.value)"></div>
+    <div class="field full"><label>الوصف</label><textarea id="fDesc" rows="3">${esc(s.desc||"")}</textarea></div>
+    <div class="field full"><label>${I.paint} اختر أيقونة</label>${iconPickerHTML(s.icon)}</div>
+  </div>
+  <div style="height:12px"></div>
+  <button class="primary" style="width:100%" onclick="updateSubject('${id}')">${I.save} حفظ</button>`);
+}
+function updateSubject(id){
+  const s=subject(id);if(!s)return;
+  s.name=document.getElementById("fName").value.trim();
+  s.icon=(document.getElementById("fIcon").value||"📚").trim().slice(0,4)||"📚";
+  s.desc=document.getElementById("fDesc").value.trim();
+  saveDB();closeModal();render();toast("تم");
+}
+function deleteSubject(id){
+  const s=subject(id);if(!s)return;
+  const tL=s.units.reduce((n,u)=>n+u.lessons.length,0);
+  const tQ=s.units.reduce((n,u)=>n+u.lessons.reduce((m,l)=>m+l.questions.length,0),0);
+  if(!confirm(`حذف "${s.name}"؟\n\nسيتم حذف ${s.units.length} وحدة و${tL} درس و${tQ} سؤال.`))return;
+  db.subjects=db.subjects.filter(x=>x.id!==id);saveDB();render();toast("تم الحذف");
+}
+function newUnit(){
+  if(!db.subjects.length)return toast("أضف مادة أولاً");
+  showModal(`<div class="modal-head"><h2>${I.plus} إضافة وحدة</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="field"><label>المادة</label><select id="unitSubject">${db.subjects.map(s=>`<option value="${s.id}">${esc(s.icon)} ${esc(s.name)}</option>`).join("")}</select></div>
+  <div style="height:8px"></div>
+  <div class="field"><label>اسم الوحدة</label><input id="unitName"></div>
+  <div style="height:12px"></div>
+  <button class="primary" style="width:100%" onclick="saveUnit()">${I.save} حفظ</button>`);
+}
+function newUnitFor(subjectId){
+  if(!db.subjects.length)return toast("لا توجد مواد");
+  showModal(`<div class="modal-head"><h2>${I.plus} إضافة وحدة</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="field"><label>المادة</label><select id="unitSubject">${db.subjects.map(s=>`<option value="${s.id}" ${s.id===subjectId?"selected":""}>${esc(s.icon)} ${esc(s.name)}</option>`).join("")}</select></div>
+  <div style="height:8px"></div>
+  <div class="field"><label>اسم الوحدة</label><input id="unitName"></div>
+  <div style="height:12px"></div>
+  <button class="primary" style="width:100%" onclick="saveUnit()">${I.save} حفظ</button>`);
+}
+function saveUnit(){
+  const s=subject(document.getElementById("unitSubject").value);
+  const name=document.getElementById("unitName").value.trim();
+  if(!name||!s)return toast("أكمل البيانات");
+  s.units.push({id:uid("u"),name,lessons:[]});saveDB();closeModal();render();toast("تم");
+}
+function findUnitAny(id){for(const s of db.subjects){const u=s.units.find(x=>x.id===id);if(u)return{s,u}}return null}
+function editUnit(uid){
+  const r=findUnitAny(uid);if(!r)return;
+  showModal(`<div class="modal-head"><h2>${I.edit} تعديل الوحدة</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="field"><label>الاسم</label><input id="unitName" value="${esc(r.u.name)}"></div>
+  <div style="height:12px"></div>
+  <button class="primary" style="width:100%" onclick="updateUnit('${uid}')">${I.save} حفظ</button>`);
+}
+function updateUnit(uid){
+  const r=findUnitAny(uid);if(!r)return;
+  const name=document.getElementById("unitName").value.trim();
+  if(!name)return toast("اكتب الاسم");
+  r.u.name=name;saveDB();closeModal();render();toast("تم");
+}
+function deleteUnit(uid){
+  const r=findUnitAny(uid);if(!r)return;
+  const tL=r.u.lessons.length;
+  const tQ=r.u.lessons.reduce((m,l)=>m+l.questions.length,0);
+  if(!confirm(`حذف "${r.u.name}"؟\n\n${tL} درس و${tQ} سؤال سيُحذف.`))return;
+  r.s.units=r.s.units.filter(x=>x.id!==uid);saveDB();render();toast("تم الحذف");
+}
+function newLesson(){
+  if(!db.subjects.some(s=>s.units.length))return toast("أضف وحدة أولاً");
+  const options=[];db.subjects.forEach(s=>s.units.forEach(u=>options.push(`<option value="${u.id}">${esc(s.name)} — ${esc(u.name)}</option>`)));
+  showModal(`<div class="modal-head"><h2>${I.plus} إضافة درس</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="field"><label>الوحدة</label><select id="lessonUnit">${options.join("")}</select></div>
+  <div style="height:8px"></div>
+  <div class="field"><label>اسم الدرس</label><input id="lessonName"></div>
+  <div style="height:8px"></div>
+  <div class="field"><label>الوصف</label><textarea id="lessonDesc" rows="2"></textarea></div>
+  <div style="height:12px"></div>
+  <button class="primary" style="width:100%" onclick="saveLesson()">${I.save} حفظ</button>`);
+}
+function newLessonFor(unitId){
+  if(!db.subjects.some(s=>s.units.length))return toast("لا توجد وحدات");
+  const options=[];db.subjects.forEach(s=>s.units.forEach(u=>options.push(`<option value="${u.id}" ${u.id===unitId?"selected":""}>${esc(s.name)} — ${esc(u.name)}</option>`)));
+  showModal(`<div class="modal-head"><h2>${I.plus} إضافة درس</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="field"><label>الوحدة</label><select id="lessonUnit">${options.join("")}</select></div>
+  <div style="height:8px"></div>
+  <div class="field"><label>اسم الدرس</label><input id="lessonName"></div>
+  <div style="height:8px"></div>
+  <div class="field"><label>الوصف</label><textarea id="lessonDesc" rows="2"></textarea></div>
+  <div style="height:12px"></div>
+  <button class="primary" style="width:100%" onclick="saveLesson()">${I.save} حفظ</button>`);
+}
+function findUnit(id){for(const s of db.subjects){const u=s.units.find(x=>x.id===id);if(u)return u}}
+function saveLesson(){
+  const u=findUnit(document.getElementById("lessonUnit").value);
+  const name=document.getElementById("lessonName").value.trim();
+  if(!name||!u)return toast("أكمل البيانات");
+  u.lessons.push({id:uid("l"),name,desc:document.getElementById("lessonDesc").value.trim(),questions:[]});
+  saveDB();closeModal();render();toast("تم");
+}
+function editLesson(id){
+  const l=lessonBy(id);if(!l)return;
+  showModal(`<div class="modal-head"><h2>${I.edit} تعديل الدرس</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="field"><label>الاسم</label><input id="fName" value="${esc(l.name)}"></div>
+  <div style="height:8px"></div>
+  <div class="field"><label>الوصف</label><textarea id="fDesc" rows="2">${esc(l.desc||"")}</textarea></div>
+  <div style="height:12px"></div>
+  <button class="primary" style="width:100%" onclick="updateLesson('${id}')">${I.save} حفظ</button>`);
+}
+function updateLesson(id){
+  const l=lessonBy(id);if(!l)return;
+  l.name=document.getElementById("fName").value.trim();
+  l.desc=document.getElementById("fDesc").value.trim();
+  saveDB();closeModal();render();toast("تم");
+}
+function deleteLesson(id){
+  const l=lessonBy(id);if(!l)return;
+  if(!confirm(`حذف "${l.name}"؟\n\n${l.questions.length} سؤال سيُحذف.`))return;
+  db.subjects.forEach(s=>s.units.forEach(u=>u.lessons=u.lessons.filter(x=>x.id!==id)));
+  saveDB();render();toast("تم");
+}
+function newQuestion(lessonId){
+  const ls=[];
+  db.subjects.forEach(s=>s.units.forEach(u=>u.lessons.forEach(l=>ls.push(`<option value="${l.id}" ${l.id===lessonId?"selected":""}>${esc(s.name)} — ${esc(l.name)}</option>`))));
+  if(!ls.length)return toast("أضف درساً أولاً");
+  showModal(`<div class="modal-head"><h2>${I.plus} إضافة سؤال</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="field"><label>الدرس</label><select id="qLesson">${ls.join("")}</select></div>
+  <div style="height:8px"></div>
+  <div class="field"><label>السؤال</label><textarea id="qText" rows="2"></textarea></div>
+  <div style="height:8px"></div>
+  <div class="form-grid">
+    <div class="field"><label>A</label><input id="qa"></div>
+    <div class="field"><label>B</label><input id="qb"></div>
+    <div class="field"><label>C</label><input id="qc"></div>
+    <div class="field"><label>D</label><input id="qd"></div>
+    <div class="field"><label>الصحيحة</label><select id="qCorrect"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></div>
+    <div class="field"><label>شرح</label><input id="qExp"></div>
+  </div>
+  <div style="height:12px"></div>
+  <button class="primary" style="width:100%" onclick="saveQuestion()">${I.save} حفظ</button>`);
+}
+function saveQuestion(){
+  const l=lessonBy(document.getElementById("qLesson").value);
+  const q=document.getElementById("qText").value.trim();
+  const a=[qa.value.trim(),qb.value.trim(),qc.value.trim(),qd.value.trim()];
+  if(!q||a.some(x=>!x)||!l)return toast("أكمل البيانات");
+  l.questions.push({q,a,correct:Number(document.getElementById("qCorrect").value),exp:document.getElementById("qExp").value.trim()});
+  saveDB();closeModal();render();toast("تم");
+}
+function manageQuestions(id){
+  const l=lessonBy(id);if(!l)return;
+  const items=l.questions.map((q,i)=>`
+    <div class="lesson" style="flex-wrap:wrap">
+      <div style="flex:1;min-width:180px">
+        <b style="font-size:12.5px">${i+1}. ${esc(q.q)}</b>
+        <small>A: ${esc(q.a[0])} • B: ${esc(q.a[1])} • C: ${esc(q.a[2])} • D: ${esc(q.a[3])}</small>
+        <div style="color:var(--green);font-size:11px;margin-top:4px;font-weight:800">✓ ${String.fromCharCode(65+q.correct)} - ${esc(q.a[q.correct])}</div>
+      </div>
+      <button class="mini-btn danger" onclick="deleteQuestion('${id}',${i})">${I.trash}</button>
+    </div>`).join("");
+  showModal(`<div class="modal-head"><h2>${I.layers} ${esc(l.name)}</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="btn-row" style="margin-bottom:10px">
+    <button class="primary" onclick="closeModal();newQuestion('${id}')">${I.plus} جديد</button>
+    <button class="warn" onclick="closeModal();importQuestionsJSONFor('${id}')">${I.code} JSON</button>
+    <button class="danger" onclick="deleteAllQuestions('${id}')">${I.trash} الكل</button>
+  </div>
+  ${items||`<div class="empty">لا توجد أسئلة.</div>`}`);
+}
+function deleteQuestion(lid,i){
+  const l=lessonBy(lid);if(!l)return;
+  if(confirm("حذف السؤال؟")){l.questions.splice(i,1);saveDB();closeModal();manageQuestions(lid);toast("تم")}
+}
+function deleteAllQuestions(lid){
+  const l=lessonBy(lid);if(!l)return;
+  if(!confirm(`حذف كل أسئلة "${l.name}"؟`))return;
+  l.questions=[];saveDB();closeModal();render();toast("تم");
+}
+function importQuestionsJSON(){
+  const ls=[];
+  db.subjects.forEach(s=>s.units.forEach(u=>u.lessons.forEach(l=>ls.push(`<option value="${l.id}">${esc(s.name)} — ${esc(l.name)} (${l.questions.length})</option>`))));
+  if(!ls.length)return toast("أضف درساً أولاً");
+  showModal(`<div class="modal-head"><h2>${I.code} استيراد JSON</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="field"><label>الدرس</label><select id="jsonLesson">${ls.join("")}</select></div>
+  <div style="height:8px"></div>
+  <div class="field"><label>مصفوفة JSON (عدد غير محدود)</label>
+    <textarea id="jsonText" class="code" rows="10" placeholder='[{"q":"سؤال","a":["أ","ب","ج","د"],"correct":0}]'></textarea></div>
+  <div class="code-sample">FORMAT:
+[{"q":"...", "a":["A","B","C","D"], "correct":0, "exp":"..."}]
+correct: 0=أ, 1=ب, 2=ج, 3=د</div>
+  <div style="height:12px"></div>
+  <div class="btn-row">
+    <button class="primary" onclick="parseAndImportQuestions()">${I.check} استيراد</button>
+    <button class="secondary" onclick="copyJSONSample()">${I.copy} مثال</button>
+  </div>`);
+}
+function importQuestionsJSONFor(lessonId){
+  const ls=[];
+  db.subjects.forEach(s=>s.units.forEach(u=>u.lessons.forEach(l=>ls.push(`<option value="${l.id}" ${l.id===lessonId?"selected":""}>${esc(s.name)} — ${esc(l.name)} (${l.questions.length})</option>`))));
+  if(!ls.length)return toast("أضف درساً أولاً");
+  showModal(`<div class="modal-head"><h2>${I.code} استيراد JSON</h2><button class="icon-btn" onclick="closeModal()">${I.x}</button></div>
+  <div class="field"><label>الدرس</label><select id="jsonLesson">${ls.join("")}</select></div>
+  <div style="height:8px"></div>
+  <div class="field"><label>مصفوفة JSON</label>
+    <textarea id="jsonText" class="code" rows="10" placeholder='[{"q":"...","a":["A","B","C","D"],"correct":0}]'></textarea></div>
+  <div class="code-sample">FORMAT:
+[{"q":"...", "a":["A","B","C","D"], "correct":0, "exp":"..."}]</div>
+  <div style="height:12px"></div>
+  <div class="btn-row">
+    <button class="primary" onclick="parseAndImportQuestions()">${I.check} استيراد</button>
+    <button class="secondary" onclick="copyJSONSample()">${I.copy} مثال</button>
+  </div>`);
+}
+function copyJSONSample(){
+  const sample = JSON.stringify([
+    {q:"ما هي عاصمة سوريا؟", a:["حلب","دمشق","حمص","اللاذقية"], correct:1, exp:"دمشق هي العاصمة."},
+    {q:"2 + 2 =", a:["3","4","5","6"], correct:1}
+  ], null, 2);
+  try{
+    if(navigator.clipboard) navigator.clipboard.writeText(sample);
+    const ta=document.getElementById("jsonText");
+    if(ta)ta.value=sample;
+    toast("تم إدراج المثال");
+  }catch(e){
+    const ta=document.getElementById("jsonText");
+    if(ta)ta.value=sample;
+  }
+}
+function parseAndImportQuestions(){
+  const lessonId=document.getElementById("jsonLesson").value;
+  const text=(document.getElementById("jsonText").value||"").trim();
+  if(!text){toast("الصق JSON أولاً");return}
+  let data;
+  try{ data=JSON.parse(text); }catch(e){ toast("JSON غير صالح"); return; }
+  let arr = Array.isArray(data) ? data : (data && Array.isArray(data.questions) ? data.questions : null);
+  if(!arr || !arr.length){ toast("مصفوفة أسئلة فارغة"); return; }
+  const l=lessonBy(lessonId);
+  if(!l){ toast("الدرس غير موجود"); return; }
+  let added=0, failed=0;
+  arr.forEach(item=>{
+    try{
+      if(!item || typeof item!=="object"){ failed++; return; }
+      const q=String(item.q||"").trim();
+      if(!q){ failed++; return; }
+      let a=item.a;
+      if(!Array.isArray(a) || a.length<2){ failed++; return; }
+      a=a.map(x=>String(x==null?"":x));
+      while(a.length<4) a.push("");
+      a=a.slice(0,4);
+      if(a.some(x=>!x.trim())){ failed++; return; }
+      const correct=Number(item.correct);
+      if(isNaN(correct)||correct<0||correct>3){ failed++; return; }
+      l.questions.push({q,a,correct,exp:item.exp?String(item.exp):""});
+      added++;
+    }catch(e){ failed++; }
+  });
+  if(added){
+    saveDB();closeModal();render();
+    toast(failed?`تم استيراد ${added}، فشل ${failed}`:`✓ تم استيراد ${added} سؤال`);
+  } else toast("لم يتم استيراد أي سؤال");
+}
+
+/* ===== Modal & Misc ===== */
+function showModal(html){
+  document.getElementById("modalBox").innerHTML=html;
+  document.getElementById("modal").classList.add("show");
+  document.body.style.overflow="hidden";
+}
+function closeModal(){
+  document.getElementById("modal").classList.remove("show");
+  document.body.style.overflow="";
+}
+document.getElementById("modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
+
+function saveSettings(){
+  const name=document.getElementById("setName").value.trim();
+  if(name)db.settings.appName=name;
+  db.settings.timerDefault=Math.max(10,Number(document.getElementById("setTimer").value)||60);
+  const p=document.getElementById("setPass").value.trim();
+  if(p)db.settings.adminPassword=p;
+  saveDB();render();toast("تم الحفظ");
+}
+function clearResults(){if(confirm("مسح جميع النتائج المحلية؟")){db.results=[];saveDB();render();toast("تم")}}
+function exportDB(){
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="aloosh-backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.click();URL.revokeObjectURL(a.href);toast("تم التصدير");
+}
+function importDB(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=async ()=>{
+    try{
+      const x=JSON.parse(r.result);
+      if(!x.subjects||!x.settings)throw Error();
+      if(!x.user)x.user=cloneDB(defaultDB.user);
+      if(!x.users)x.users=[];
+      if(!x.bannedDevices)x.bannedDevices=[];
+      db=x;saveDB();
+      for(const d of (db.bannedDevices||[])){
+        await applyLocalBan(d, "imported");
+      }
+      _isBanned = await checkLocalBan();
+      render();toast("تم الاستيراد");
+    }catch(err){toast("ملف غير صالح")}
+  };
+  r.readAsText(file);
+}
+async function resetDB(){
+  if(!confirm("إعادة النظام للافتراضي؟\n\n⚠️ الحظر السحابي لن يُحذف."))return;
+  const keepBanned = (db.bannedDevices||[]).slice();
+  db=cloneDB(defaultDB);
+  db.bannedDevices = keepBanned;
+  saveDB();navStack=[];
+  for(const d of keepBanned){ await applyLocalBan(d, ""); }
+  _isBanned = await checkLocalBan();
+  render();toast("تم");
+}
+
+/* ===== Nav shortcuts ===== */
+function goHome(){state.search="";nav("home")}
+function showSubjects(){state.search="";nav("subjects")}
+function openSubject(id){state.subjectId=id;nav("subject")}
+function showResults(){state.search="";nav("results")}
+function showLeaderboard(){nav("leaderboard")}
+function openSearch(){nav("home");setTimeout(()=>{const el=document.getElementById("homeSearch");if(el)el.focus()},60)}
+
+/* =========================================================
+   ★★★ BAN WATCHER — يستقبل الحظر فورياً من السحابة ★★★
+   ========================================================= */
+function setupBanWatcher(){
+  if(cloud.banUnsubscribe){ try{ cloud.banUnsubscribe(); }catch(e){} cloud.banUnsubscribe=null; }
+  if(!cloud.ok){ return; }
+  cloud.banUnsubscribe = firestoreWatchBan(DEVICE_ID, async (banned, data)=>{
+    if(banned){
+      if(!_isBanned){
+        _isBanned = true;
+        _banReason = (data && data.reason) || "";
+        // Sync local layers so it persists offline
+        await applyLocalBan(DEVICE_ID, _banReason);
+        if((db.bannedDevices||[]).indexOf(DEVICE_ID)===-1){
+          if(!db.bannedDevices) db.bannedDevices=[];
+          db.bannedDevices.push(DEVICE_ID);
+          saveDB();
+        }
+        // Kick out immediately
+        clearInterval(quizTimer);
+        state.quiz=null;
+        render();
+        toast("🚫 تم حظر هذا الجهاز");
+      }
+    } else {
+      // Unbanned remotely
+      if(_isBanned){
+        _isBanned = false;
+        _banReason = "";
+        await removeLocalBan(DEVICE_ID);
+        db.bannedDevices = (db.bannedDevices||[]).filter(d=>d!==DEVICE_ID);
+        saveDB();
+        render();
+        toast("✓ تم فك الحظر");
+      }
+    }
+  });
+}
+
+/* =========================================================
+   ★★★ BOOT ★★★
+   ========================================================= */
+(async function boot(){
+  // 1. Device fingerprint
+  try{ await buildDeviceId(); }
+  catch(e){ if(!DEVICE_ID) DEVICE_ID="DEV-UNKNOWN-000000"; }
+
+  // 2. Local ban check (5 layers)
+  try{ _isBanned = await checkLocalBan(); }
+  catch(e){ _isBanned = false; }
+
+  // 3. Render early (with local state) so user sees UI fast
+  try{ history.pushState({ depth:0 }, ""); }catch(e){}
+  render();
+
+  // 4. Init Firebase (async, doesn't block UI)
+  initFirebase().then(async (ok)=>{
+    if(ok){
+      // 4a. Check cloud ban for this device
+      const cloudBan = await firestoreCheckBan(DEVICE_ID);
+      if(cloudBan){
+        _isBanned = true;
+        _banReason = cloudBan.reason || "";
+        await applyLocalBan(DEVICE_ID, _banReason);
+        if((db.bannedDevices||[]).indexOf(DEVICE_ID)===-1){
+          if(!db.bannedDevices) db.bannedDevices=[];
+          db.bannedDevices.push(DEVICE_ID);
+          saveDB();
+        }
+      } else if(_isBanned){
+        // Local ban but no cloud ban → keep local ban (admin banned locally)
+        // Optional: uncomment next line to also sync local→cloud
+        // await firestoreSetBan(DEVICE_ID, { reason: _banReason });
+      }
+
+      // 4b. Watch for live ban changes
+      setupBanWatcher();
+
+      // 4c. Sync our user to cloud
+      if(db.user && db.user.name){
+        firestoreSyncUser(DEVICE_ID, {
+          name: db.user.name,
+          deviceInfo: DEVICE_INFO,
+          points: db.user.points||0,
+          quizzesTaken: db.user.quizzesTaken||0,
+          correctTotal: db.user.correctTotal||0,
+          joinedAt: db.user.joinedAt
+        });
+      }
+
+      // 4d. Load cloud bans for admin view
+      const list = await firestoreFetchBans();
+      if(list) state.cloudBans = list;
+
+      // Re-render to show cloud status
+      render();
+    } else {
+      render();
+    }
+  });
+
+  // 5. Re-check ban when tab becomes visible
+  document.addEventListener("visibilitychange", async ()=>{
+    if(!document.hidden){
+      const local = await checkLocalBan();
+      if(local && !_isBanned){ _isBanned=true; render(); return; }
+      if(cloud.ok){
+        const cb = await firestoreCheckBan(DEVICE_ID);
+        if(cb && !_isBanned){
+          _isBanned=true;
+          _banReason = cb.reason||"";
+          await applyLocalBan(DEVICE_ID, _banReason);
+          render();
+        }
+      }
+    }
+  });
+})();
 </script>
 </body>
 </html>
